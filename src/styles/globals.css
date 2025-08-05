@@ -1,0 +1,39 @@
+/* Ini global styling sederhana untuk responsive */
+
+body {
+  margin: 0;
+  font-family: poppins, sans-serif;
+}
+
+/* Biar tombol lebih enak di mobile */
+button {
+  padding: 0.8rem 1.2rem;
+  font-size: 1rem;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td, th {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 0.6rem;
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 1.5rem;
+  }
+}

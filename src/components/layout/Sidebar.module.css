@@ -1,0 +1,93 @@
+.sidebar {
+  width: 220px;
+  background-color: #003366; /* biru tua */
+  color: #fff;
+  padding: 2rem 1rem;
+  height: 100vh;
+  position: fixed;
+}
+
+.brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Untuk menu utama yg nested */
+.menuGroup {
+  margin-bottom: 1rem;
+}
+
+.groupLabel {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  padding-left: 0.5rem;
+  font-size: 0.95rem;
+  color: #ffcc00; /* kuning dari palet kita */
+}
+
+/* Link submenu */
+.link {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.4rem 0.5rem;
+  border-radius: 5px;
+  display: block;
+  margin-left: 1rem;
+}
+
+.link:hover {
+  background-color: #005fa3;
+}
+
+.logoutBtn {
+  margin-top: 10rem;
+  background-color: #e63946;
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.logoutBtn:hover {
+  background-color: #d62839;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    position: relative;
+    height: auto;
+  }
+
+  .nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .link {
+    margin-left: 0;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .logoutBtn {
+  margin-top: auto;
+  background-color: #e63946;
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 500;
+}
+}

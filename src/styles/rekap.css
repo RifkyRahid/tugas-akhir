@@ -1,0 +1,60 @@
+.rekap-container {
+  padding: 24px;
+  padding-left: 240px;
+  background-color: #f3f4f6;
+  min-height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.rekap-card {
+  background-color: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 8px rgba(30, 58, 138, 0.1);
+  margin-bottom: 24px;
+}
+
+.rekap-card h2 {
+  color: #1e3a8a;
+  font-size: 20px;
+  margin-bottom: 16px;
+}
+
+.filter-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.filter-container select {
+  padding: 6px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: white;
+  color: #1e293b;
+}
+
+.rekap-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rekap-table th,
+.rekap-table td {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 14px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.rekap-table th {
+  background-color: #eff6ff;
+  color: #1e3a8a;
+  font-weight: 600;
+}
+
+.rekap-table tr:hover {
+  background-color: #f1f5f9;
+}

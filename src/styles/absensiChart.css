@@ -1,0 +1,44 @@
+.grafik-absensi-card {
+  margin-top: 32px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 800px;
+}
+
+.grafik-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.grafik-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.grafik-label {
+  width: 100px;
+  font-size: 14px;
+  color: #0369a1;
+}
+
+.grafik-bar-container {
+  flex: 1;
+  background-color: #e0f2fe;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.grafik-bar {
+  background-color: #0284c7;
+  height: 24px;
+  color: white;
+  text-align: right;
+  padding-right: 8px;
+  font-size: 14px;
+  line-height: 24px;
+}

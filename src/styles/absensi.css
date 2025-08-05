@@ -1,0 +1,27 @@
+.generate-alpha-btn {
+  background-color: #dc3545; /* merah */
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.generate-alpha-btn:hover {
+  background-color: #c82333;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.error-container {
+  text-align: center;
+  padding: 2rem;
+  color: #dc2626;
+}

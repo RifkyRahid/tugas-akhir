@@ -1,0 +1,30 @@
+.karyawan-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar-spacer {
+  width: 100px;
+}
+
+.karyawan-main {
+  flex: 1;
+  padding: 2rem;
+  background-color: #f3f6fd;
+}
+
+/* Responsive mobile */
+@media (max-width: 768px) {
+  .karyawan-layout {
+    flex-direction: column;
+  }
+
+  .sidebar-spacer {
+    width: 0;
+    height: 0;
+  }
+
+  .karyawan-main {
+    padding: 1rem;
+  }
+}

@@ -1,0 +1,120 @@
+.dashboard-container {
+  padding: 2rem;
+  background-color: #f3f4f6;
+  min-height: 100vh;
+}
+
+.dashboard-card {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  border-left: 6px solid #facc15; /* Garis kuning di kiri */
+}
+
+.dashboard-card h1 {
+  color: #1e3a8a;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-card .highlight {
+  font-weight: bold;
+  color: #facc15;
+}
+
+.summary-card-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 4 kolom sama besar */
+  gap: 1pc;
+  width: 100%;
+}
+
+
+.summary-card {
+  width: 100px;
+  height: 100px;
+  padding: 1.10rem;
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.summary-card:hover {
+  transform: scale(1.03);
+}
+
+.summary-card h3 {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.summary-card p {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+/* Warna tema */
+.summary-card.blue {
+  background-color: #3b82f6;
+}
+
+.summary-card.green {
+  background-color: #10b981;
+}
+
+.summary-card.red {
+  background-color: #ef4444;
+}
+
+.summary-card.yellow {
+  background-color: #facc15;
+}
+
+.summary-card.purple {
+  background-color: #7e57c2;
+}
+
+.rekap-absensi-card {
+  background-color: white;
+  border-left: 6px solid #facc15;
+  padding: 20px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 800px;
+}
+
+.rekap-filter {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.rekap-absensi-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.rekap-absensi-table th {
+  background-color: #0284c7;
+  color: white;
+  padding: 10px;
+  text-align: left;
+}
+
+.rekap-absensi-table td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}

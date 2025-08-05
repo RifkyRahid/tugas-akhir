@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(uuid())
+  name          String
+  email         String         @unique
+  password      String
+  role          Role
+  position      String?
+  joinDate      DateTime
+  isActive      Boolean        @default(true)
+  attendances   Attendance[]
+  leaveRequests LeaveRequest[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Attendance {
+  id        String           @id @default(uuid())
+  user      User             @relation(fields: [userId], references: [id])
+  userId    String
+  date      DateTime
+  checkIn   DateTime?
+  checkOut  DateTime?
+  status    AttendanceStatus
+  keterangan String?
+  tes         String?
+  lateMinutes Int?
+  latitude    Float?           
+  longitude   Float?           
+  photo       String?          
+  createdAt DateTime         @default(now())
+
+  @@unique([userId, date]) 
+}
+
+model LeaveRequest {
+  id         String       @id @default(uuid())
+  user       User         @relation(fields: [userId], references: [id])
+  userId     String
+  type       LeaveType
+  startDate  DateTime
+  endDate    DateTime
+  reason     String
+  status     LeaveStatus  @default(pending)
+  attachment String?
+  createdAt  DateTime     @default(now())
+}
+
+model EventReminder {
+  id          String    @id @default(uuid())
+  title       String
+  date        DateTime
+  description String?
+  type        EventType @default(OTHER)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model AttendanceArea {
+  id        Int      @id @default(autoincrement())
+  name      String
+  latitude  Float
+  longitude Float
+  radius    Int
+  createdAt DateTime @default(now())
+}
+
+
+enum EventType {
+  MEETING
+  BIRTHDAY
+  HOLIDAY
+  OTHER
+}
+
+enum Role {
+  admin
+  karyawan
+}
+
+enum AttendanceStatus {
+  hadir
+  izin
+  sakit
+  cuti
+  alpha
+  pending
+}
+
+enum LeaveType {
+  izin
+  sakit
+  cuti
+}
+
+enum LeaveStatus {
+  pending
+  disetujui
+  ditolak
+}
+

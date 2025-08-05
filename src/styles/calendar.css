@@ -1,0 +1,110 @@
+.main-content {
+  width: 100%;
+  max-width: calc(100% - 240px); /* Misal sidebar kamu 240px */
+  margin-left: 260px; /* sesuaikan */
+}
+
+.fc {
+  background-color: white;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+/* Tombol prev dan next */
+.fc .fc-button {
+  background-color: #f1c40f !important; /* warna kuning dari palet kamu */
+  border: none !important;
+  color: #fff !important;
+  font-weight: bold;
+  padding: 6px 12px;
+  border-radius: 4px;
+}
+
+.fc .fc-button:hover {
+  background-color: #d4ac0d !important;
+}
+
+/* Judul bulan */
+.fc .fc-toolbar-title {
+  color: #003366; /* warna biru palet kamu */
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* Navigasi toolbar posisi tengah dan rapi */
+.fc .fc-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-card {
+  background: #fff;
+  border-left: 5px solid #ffcc00;
+  padding: 40px;
+  width: 350px;
+  border-radius: 8px;
+}
+
+.modal-card h2 {
+  color: #007bff;
+  margin-bottom: 15px;
+}
+
+.modal-card input, .modal-card textarea, .modal-card select {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 8px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.simpan-button {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+}
+
+.batal-button {
+  background-color: #ffcc00;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+}
+
+.hapus-button {
+  background-color: red;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+}
+
+.tambah-button {
+  background-color: #ffcc00;
+  color: #000;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
