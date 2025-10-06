@@ -1,136 +1,151 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import React, { useState, useEffect } from "react";
-import nextDynamic from "next/dynamic";
-import { LatLngExpression } from "leaflet";
 import "@/styles/areaabsensi.css";
-
-// ⬇️ Load LeafletMap hanya di client
-const LeafletMap = nextDynamic(() => import("@/components/LeafletMap"), {
-  ssr: false,
-});
+import ModalFormArea from "@/components/ModalFormArea";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 export default function AreaAbsensiPage() {
-  const [location, setLocation] = useState<LatLngExpression | null>(null);
-  const [radius, setRadius] = useState<number>(100);
-  const [name, setName] = useState<string>("");
+  const [areas, setAreas] = useState<any[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editData, setEditData] = useState<any>(null);
+
+  const [deleteTarget, setDeleteTarget] = useState<any>(null); // area yang mau dihapus
 
   useEffect(() => {
-    async function fetchArea() {
-      try {
-        const res = await fetch("/api/master/area-absensi");
-        const data = await res.json();
-        if (res.ok && data?.data) {
-          const { latitude, longitude, radius, name } = data.data;
-          setLocation([latitude, longitude]);
-          setRadius(radius);
-          setName(name);
-        }
-      } catch (err) {
-        console.error("Gagal mengambil data area", err);
-      }
-    }
-
-    fetchArea();
+    fetchAreas();
   }, []);
 
-  async function handleSave() {
+  async function fetchAreas() {
     try {
-      if (!location) {
-        alert("Tentukan lokasi terlebih dahulu");
-        return;
-      }
-
-      const payload = {
-        name,
-        latitude: Array.isArray(location) ? location[0] : 0,
-        longitude: Array.isArray(location) ? location[1] : 0,
-        radius,
-      };
-
-      const res = await fetch("/api/master/area-absensi", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        alert("Area berhasil disimpan");
-      } else {
-        const data = await res.json();
-        alert("Gagal menyimpan: " + data.error);
-      }
+      const res = await fetch("/api/master/area-absensi");
+      const data = await res.json();
+      if (res.ok && data?.data) setAreas(data.data);
     } catch (err) {
-      console.error(err);
-      alert("Terjadi kesalahan");
+      console.error("Gagal mengambil data area", err);
+    }
+  }
+
+  function handleTambahArea() {
+    setEditData(null); // reset ke mode tambah
+    setIsModalOpen(true);
+  }
+
+  function handleEditArea(area: any) {
+    setEditData(area);
+    setIsModalOpen(true);
+  }
+
+  function handleDeleteArea(area: any) {
+    setDeleteTarget(area);
+  }
+
+  async function handleSubmitArea(data: any) {
+    try {
+      if (data.id) {
+        await fetch(`/api/master/area-absensi/${data.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+      } else {
+        await fetch(`/api/master/area-absensi`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+      }
+      fetchAreas();
+    } catch (err) {
+      console.error("Gagal simpan area", err);
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    try {
+      await fetch(`/api/master/area-absensi/${deleteTarget.id}`, {
+        method: "DELETE",
+      });
+      fetchAreas();
+    } catch (err) {
+      console.error("Gagal hapus area", err);
+    } finally {
+      setDeleteTarget(null);
     }
   }
 
   return (
     <div className="area-absensi-container">
-      <h1 className="page-title">Pengaturan Area Absensi</h1>
+      <h1 className="page-title">Daftar Area Absensi</h1>
 
-      <div className="form-section">
-        <div className="form-group">
-          <label>Latitude</label>
-          <input
-            type="number"
-            value={Array.isArray(location) ? location[0] : ""}
-            onChange={(e) =>
-              setLocation([
-                parseFloat(e.target.value),
-                Array.isArray(location) ? location[1] : 0,
-              ])
-            }
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Longitude</label>
-          <input
-            type="number"
-            value={Array.isArray(location) ? location[1] : ""}
-            onChange={(e) =>
-              setLocation([
-                Array.isArray(location) ? location[0] : 0,
-                parseFloat(e.target.value),
-              ])
-            }
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Radius (Meter)</label>
-          <input
-            type="number"
-            value={radius}
-            onChange={(e) => setRadius(parseInt(e.target.value))}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Nama Spot</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-
-        <button className="save-button" onClick={handleSave}>Simpan</button>
+      <div className="header-actions">
+        <button className="primary-button" onClick={handleTambahArea}>
+          + Tambah Area Baru
+        </button>
       </div>
 
-      <div className="map-section">
-        {location && (
-          <LeafletMap
-            location={location}
-            radius={radius}
-            setLocation={setLocation}
-          />
-        )}
+      <div className="table-section">
+        <table className="area-table">
+          <thead>
+            <tr>
+              <th>Nama Lokasi</th>
+              <th>Alamat</th>
+              <th>Jumlah Penempatan</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {areas.length > 0 ? (
+              areas.map((area) => (
+                <tr key={area.id}>
+                  <td>{area.name}</td>
+                  <td>{area.alamat || "Alamat belum diisi"}</td>
+                  <td>{area.jumlahPersonalia || 0}</td>
+                  <td>
+                    <button
+                      className="action-btn"
+                      title="Ubah"
+                      onClick={() => handleEditArea(area)}
+                    >
+                      <img src="/icons/edit.png" alt="Ubah" className="icon-btn" />
+                    </button>
+                    <button
+                      className="action-btn delete"
+                      title="Hapus"
+                      onClick={() => handleDeleteArea(area)}
+                    >
+                      <img src="/icons/remove.png" alt="Hapus" className="icon-btn" />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={4} style={{ textAlign: "center" }}>
+                  Belum ada area absensi
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
+
+      {/* Modal Tambah/Edit */}
+      <ModalFormArea
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmitArea}
+        initialData={editData}
+      />
+
+      {/* Modal Hapus */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        message={`Yakin ingin menghapus area "${deleteTarget?.name}"?`}
+      />
     </div>
   );
 }

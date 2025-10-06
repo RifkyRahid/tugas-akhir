@@ -46,6 +46,9 @@ form input {
   border: none;
   border-radius: 5px;
   font-size: 14px;
+  box-sizing: border-box; /* Tambahkan ini agar padding tidak menambah lebar */
+  display: block;         /* Pastikan input satu baris penuh */
+  margin-left: 0;         /* Pastikan tidak ada margin kiri */
 }
 
 .forgot {

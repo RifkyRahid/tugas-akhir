@@ -1,25 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+// Tambah area absensi baru
 export async function POST(req: NextRequest) {
   try {
-    const { latitude, longitude, radius } = await req.json();
+    const { name, latitude, longitude, radius, alamat } = await req.json();
 
-    // Validasi data sederhana
     if (!latitude || !longitude || !radius) {
       return NextResponse.json({ error: "Data tidak lengkap" }, { status: 400 });
     }
 
-    // Hapus semua area sebelumnya (karena skenario 1: hanya 1 area aktif)
-    await prisma.attendanceArea.deleteMany({});
-
-    // Simpan area baru
     const newArea = await prisma.attendanceArea.create({
       data: {
-        name: "Area Absensi", // Ganti dengan nama yang sesuai jika perlu
+        name: name || "Area Absensi",
         latitude,
         longitude,
         radius,
+        // kalau kamu mau simpan alamat ke DB, pastikan schema ada field alamat:String?
+        // kalau belum, sementara bisa diabaikan
+        ...(alamat ? { alamat } : {}),
       },
     });
 
@@ -30,19 +29,38 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// Ambil semua area absensi
+// Ambil semua area absensi
 export async function GET() {
   try {
-    const latestArea = await prisma.attendanceArea.findFirst({
-      orderBy: { createdAt: 'desc' },
+    const areas = await prisma.attendanceArea.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: {
+          select: { users: true }, // hitung jumlah user
+        },
+      },
     });
 
-    if (!latestArea) {
+    if (!areas || areas.length === 0) {
       return NextResponse.json({ error: "Belum ada area" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: latestArea });
+    const formatted = areas.map((a) => ({
+      id: a.id,
+      name: a.name,
+      latitude: a.latitude,
+      longitude: a.longitude,
+      radius: a.radius,
+      alamat: a.alamat || "-",              // <== pastikan ambil field alamat
+      jumlahPersonalia: a._count.users,
+      createdAt: a.createdAt,
+    }));
+
+    return NextResponse.json({ success: true, data: formatted });
   } catch (error) {
     console.error("Gagal ambil area absensi", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+

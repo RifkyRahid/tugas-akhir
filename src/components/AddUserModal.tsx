@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React, { useState } from "react";
 
 type AddUserModalProps = {
@@ -7,15 +7,17 @@ type AddUserModalProps = {
   onUserAdded: (newUser: any) => void;
 };
 
-export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserModalProps) {
+export default function AddUserModal({
+  isOpen,
+  onClose,
+  onUserAdded,
+}: AddUserModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     position: "",
     joinDate: "",
-    tes: "",
-
   });
   const [showPassword, setShowPassword] = useState(false);
 
@@ -52,9 +54,6 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
         <h2 className="modal-title">Tambah Karyawan</h2>
 
         <div className="modal-form">
-
-          <label>Test</label>
-          <input name="test" value={formData.tes} onChange={handleChange} />
           <label>Full Name</label>
           <input name="name" value={formData.name} onChange={handleChange} />
 
@@ -80,15 +79,28 @@ export default function AddUserModal({ isOpen, onClose, onUserAdded }: AddUserMo
           </div>
 
           <label>Position</label>
-          <input name="position" value={formData.position} onChange={handleChange} />
+          <input
+            name="position"
+            value={formData.position}
+            onChange={handleChange}
+          />
 
           <label>Join Date</label>
-          <input name="joinDate" type="date" value={formData.joinDate} onChange={handleChange} />
+          <input
+            name="joinDate"
+            type="date"
+            value={formData.joinDate}
+            onChange={handleChange}
+          />
         </div>
 
-          <div className="modal-buttons">
-          <button className="btn-submit" onClick={handleSubmit}>Simpan</button>
-          <button className="btn-cancel" onClick={onClose}>Batal</button>
+        <div className="modal-buttons">
+          <button className="btn-submit" onClick={handleSubmit}>
+            Simpan
+          </button>
+          <button className="btn-cancel" onClick={onClose}>
+            Batal
+          </button>
         </div>
       </div>
 

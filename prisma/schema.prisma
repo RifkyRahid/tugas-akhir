@@ -28,26 +28,32 @@ model User {
   leaveRequests LeaveRequest[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+
+  // NEW
+  areaId        Int?
+  area          AttendanceArea? @relation(fields: [areaId], references: [id])
 }
+
 
 model Attendance {
-  id        String           @id @default(uuid())
-  user      User             @relation(fields: [userId], references: [id])
-  userId    String
-  date      DateTime
-  checkIn   DateTime?
-  checkOut  DateTime?
-  status    AttendanceStatus
-  keterangan String?
-  tes         String?
+  id          String           @id @default(uuid())
+  user        User             @relation(fields: [userId], references: [id])
+  userId      String
+  date        DateTime
+  checkIn     DateTime?
+  checkOut    DateTime?
+  status      AttendanceStatus
+  keterangan  String?
   lateMinutes Int?
-  latitude    Float?           
-  longitude   Float?           
-  photo       String?          
-  createdAt DateTime         @default(now())
-
+  latitude    Float?
+  longitude   Float?
+  photo       String?
+  createdAt   DateTime         @default(now())
+  areaId      Int?
+  area        AttendanceArea?  @relation(fields: [areaId], references: [id])
   @@unique([userId, date]) 
 }
+
 
 model LeaveRequest {
   id         String       @id @default(uuid())
@@ -75,12 +81,15 @@ model EventReminder {
 model AttendanceArea {
   id        Int      @id @default(autoincrement())
   name      String
+  alamat    String?
   latitude  Float
   longitude Float
   radius    Int
+  isActive  Boolean  @default(true)
+  attendances Attendance[]
+  users     User[]                  // NEW → relasi balik ke User
   createdAt DateTime @default(now())
 }
-
 
 enum EventType {
   MEETING
