@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 type EditUserModalProps = {
   isOpen: boolean;
@@ -10,6 +10,7 @@ type EditUserModalProps = {
     password: string;
     position?: string;
     joinDate: string;
+    areaId?: string;
   };
   onCancel: () => void;
   onSubmit: (updatedUser: any) => void;
@@ -21,12 +22,28 @@ export default function EditUserModal({
   onCancel,
   onSubmit,
 }: EditUserModalProps) {
-  const [formData, setFormData] = useState({ ...user });
+  const [formData, setFormData] = useState({ ...user, areaId: user.areaId || "" });
   const [showPassword, setShowPassword] = useState(false);
+  const [areas, setAreas] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetch('/api/master/area-absensi')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.data && Array.isArray(data.data)) {
+            setAreas(data.data);
+          } else {
+            setAreas([]);
+          }
+        })
+        .catch(() => setAreas([]));
+    }
+  }, [isOpen, user]);
 
   if (!isOpen) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -74,6 +91,14 @@ export default function EditUserModal({
             value={formData.joinDate.split("T")[0]}
             onChange={handleChange}
           />
+
+          <label>Area Absensi</label>
+          <select name="areaId" value={formData.areaId} onChange={handleChange}>
+            <option value="">Pilih Area Absensi</option>
+            {areas.map((area: any) => (
+              <option key={area.id} value={area.id}>{area.name}</option>
+            ))}
+          </select>
         </div>
 
         <div className="modal-buttons">
@@ -101,8 +126,9 @@ export default function EditUserModal({
           background: white;
           border-left: 8px solid #fdd835;
           border-radius: 10px;
-          padding: 2rem;
-          width: 400px;
+          padding: 1.2rem 1.2rem 1rem 1.2rem;
+          width: 340px;
+          max-width: 95vw;
           box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
         }
 
@@ -116,7 +142,7 @@ export default function EditUserModal({
         .modal-form {
           display: flex;
           flex-direction: column;
-          gap: 0.75rem;
+          gap: 0.55rem;
         }
 
         input {

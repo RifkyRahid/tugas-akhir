@@ -1,5 +1,6 @@
 "use client";
 
+import Swal from 'sweetalert2';
 import React, { useEffect, useState } from "react";
 import UserInfoCard from "@/components/UserInfoCard";
 import Clock from "@/components/Clock";
@@ -102,32 +103,60 @@ export default function KaryawanAbsensiPage() {
 
     if (res.ok) {
       setAbsenStatus("pulang");
-      alert("Absen pulang berhasil!");
+      Swal.fire({
+        icon: 'success',
+        title: 'Absen pulang berhasil!',
+        text: 'Terima kasih, data absen sudah tersimpan.',
+      });
     } else {
-      alert("Gagal absen pulang");
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal absen pulang',
+        text: 'Silakan coba lagi atau hubungi admin.',
+      });
     }
     setLoading(false);
   };
 
+  // Konversi base64 ke File sebelum kirim ke backend
+  function base64ToFile(base64: string, filename: string): File {
+    const arr = base64.split(",");
+    const mime = arr[0].match(/:(.*?);/)?.[1] || "image/png";
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) u8arr[n] = bstr.charCodeAt(n);
+    return new File([u8arr], filename, { type: mime });
+  }
+
   const handleCaptureComplete = async (photoData: string, location: GeolocationPosition | null) => {
     setLoading(true);
+    const photoFile = base64ToFile(photoData, `absen-${Date.now()}.png`);
+    const formData = new FormData();
+    formData.append("photo", photoFile);
+    formData.append("latitude", String(location?.coords.latitude ?? ""));
+    formData.append("longitude", String(location?.coords.longitude ?? ""));
+
     const res = await fetch("/api/absensi/checkin", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({
-        photo: photoData,
-        latitude: location?.coords.latitude ?? null,
-        longitude: location?.coords.longitude ?? null,
-      }),
+      body: formData,
     });
 
     if (res.ok) {
       setAbsenStatus("masuk");
-      alert("Absen masuk berhasil!");
+      Swal.fire({
+        icon: 'success',
+        title: 'Absen masuk berhasil!',
+        text: 'Selamat, data absen masuk sudah tersimpan.',
+      });
       setCameraOpen(false);
     } else {
-      alert("Gagal absen masuk.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal absen masuk',
+        text: 'Silakan coba lagi atau hubungi admin.',
+      });
     }
     setLoading(false);
   };

@@ -22,6 +22,8 @@ type User = {
   createdAt: string;
   updatedAt: string;
   test     : string;
+  areaId?: string;
+  area?: { name?: string };
 };
 
 export default function KelolaKaryawanPage() {
@@ -132,28 +134,26 @@ export default function KelolaKaryawanPage() {
 
           <thead>
             <tr>
-              <th>#</th>
               <th>ID Karyawan</th>
               <th>Full Name</th>
               <th>Email</th>
               <th>Position</th>
               <th>Join Date</th>
               <th>Created At</th>
+              <th>Area Absensi</th>
               <th>Action</th>
-              <th>Test</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user, index) => (
               <tr key={user.id}>
                 <td>{index + 1}</td>
-                <td>{index + 1}</td>
                 <td>{user.name}</td>
                 <td>{user.email}</td>
-                
                 <td>{user.position || "-"}</td>
                 <td>{new Date(user.joinDate).toLocaleDateString()}</td>
                 <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                <td>{user.area?.name || user.areaId || '-'}</td>
                 <td>
                   <button
                     className="btn-action edit"
@@ -168,7 +168,6 @@ export default function KelolaKaryawanPage() {
                     ❌
                   </button>
                 </td>
-                <td>{user.test}</td>
               </tr>
             ))}
           </tbody>

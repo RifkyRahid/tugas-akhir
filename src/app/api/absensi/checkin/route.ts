@@ -131,3 +131,4 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json(absen, { status: 201 });
 }
+

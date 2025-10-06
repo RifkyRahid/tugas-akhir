@@ -1,10 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 // UPDATE (PUT)
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: { id: string } } // UBAH BAGIAN INI
+) {
   try {
-    const { id } = params;
+    const { id } = params; // UBAH JUGA CARA MENGAMBIL ID
     const body = await req.json();
 
     const updated = await prisma.attendanceArea.update({
@@ -14,7 +17,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         latitude: body.latitude,
         longitude: body.longitude,
         radius: body.radius,
-        alamat: body.alamat, // pastikan sesuai dengan field di schema
+        alamat: body.alamat,
       },
     });
 
@@ -25,16 +28,24 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 // DELETE
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } } // UBAH BAGIAN INI
+) {
   try {
-    const { id } = params;
+    const { id } = params; // UBAH JUGA CARA MENGAMBIL ID
 
     await prisma.attendanceArea.delete({
       where: { id: Number(id) },
     });
 
-    return NextResponse.json({ message: "Area absensi berhasil dihapus" }, { status: 200 });
+    return NextResponse.json(
+      { message: "Area absensi berhasil dihapus" },
+      { status: 200 }
+    );
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+

@@ -12,9 +12,12 @@ export async function GET() {
     orderBy: {
       createdAt: 'desc',
     },
-  })
+    include: {
+      area: true, // include relasi area
+    },
+  });
 
-  return NextResponse.json(users)
+  return NextResponse.json(users);
 }
 
 export async function POST(req: Request) {

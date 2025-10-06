@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
 }
 
 // Ambil semua area absensi
-// Ambil semua area absensi
 export async function GET() {
   try {
     const areas = await prisma.attendanceArea.findMany({

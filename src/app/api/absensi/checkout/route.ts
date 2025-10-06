@@ -11,15 +11,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "User belum login" }, { status: 401 })
   }
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
 
   const attendance = await prisma.attendance.findFirst({
     where: {
       userId,
-      date: today,
+      date: {
+        gte: today,
+        lt: tomorrow,
+      },
     },
-  })
+  });
 
   if (!attendance) {
     return NextResponse.json({ error: "Belum absen masuk hari ini" }, { status: 404 })

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";  // pastikan path prisma kamu benar
 
+export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     // Ambil parameter bulan dan tahun

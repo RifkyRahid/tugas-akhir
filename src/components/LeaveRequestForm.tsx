@@ -1,5 +1,5 @@
 "use client";
-
+import Swal from 'sweetalert2';
 import { useState } from "react";
 
 export default function LeaveRequestForm() {
@@ -26,13 +26,23 @@ export default function LeaveRequestForm() {
     });
 
     if (res.ok) {
-      setMessage({ text: "Pengajuan berhasil dikirim!", type: "success" });
+      Swal.fire({
+        icon: 'success',
+        title: 'Pengajuan berhasil!',
+        text: 'Pengajuan cuti/izin/sakit sudah dikirim dan akan diproses.',
+      });
       setSelectedType("");
       setStartDate("");
       setEndDate("");
       setReason("");
+      setMessage({ text: "", type: "" });
     } else {
-      setMessage({ text: "Pengajuan gagal. Silakan coba lagi.", type: "error" });
+      Swal.fire({
+        icon: 'error',
+        title: 'Pengajuan gagal',
+        text: 'Silakan coba lagi atau hubungi admin.',
+      });
+      setMessage({ text: "", type: "" });
     }
   };
 

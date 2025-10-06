@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import L from "leaflet";
+import LeafletMap from "./LeafletMap";
 
 interface Props {
   isOpen: boolean;
@@ -43,7 +43,6 @@ const ModalFormArea: React.FC<Props> = ({
   const [radius, setRadius] = useState(100);
   const [location, setLocation] = useState<[number, number]>([-6.2, 106.816666]);
 
-  // Initialize form data saat buka modal
   useEffect(() => {
     if (initialData) {
       setName(initialData.name);
@@ -56,43 +55,15 @@ const ModalFormArea: React.FC<Props> = ({
       setRadius(100);
       setLocation([-6.2, 106.816666]);
     }
-  }, [initialData, isOpen]);
+  }, [initialData]);
 
-  // Setup Leaflet Map
   useEffect(() => {
-    if (!isOpen) return;
+    console.log("[ModalFormArea] mount, props:", { location, radius });
+  }, []);
 
-    // hapus instance lama kalau ada
-    if (L.DomUtil.get("map") !== null) {
-      (L.DomUtil.get("map") as any)._leaflet_id = null;
-    }
-
-    const map = L.map("map").setView(location, 15);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "© OpenStreetMap contributors",
-    }).addTo(map);
-
-    const marker = L.marker(location, { draggable: true }).addTo(map);
-    const circle = L.circle(location, { radius, color: "blue" }).addTo(map);
-
-    marker.on("dragend", () => {
-      const pos = marker.getLatLng();
-      setLocation([pos.lat, pos.lng]);
-      circle.setLatLng(pos);
-    });
-
-    // update radius circle kalau radius berubah
-    circle.setRadius(radius);
-
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 300);
-
-    return () => {
-      map.remove();
-    };
-  }, [isOpen, radius, location]);
+  useEffect(() => {
+    console.log("[ModalFormArea] location changed:", location);
+  }, [location]);
 
   const handleSubmit = () => {
     onSubmit({
@@ -111,47 +82,49 @@ const ModalFormArea: React.FC<Props> = ({
   return (
     <Dialog open={isOpen} onClose={onClose}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{initialData ? "Edit Area" : "Tambah Area Baru"}</DialogTitle>
-          <DialogDescription>
-            {initialData
-              ? "Ubah detail area yang sudah ada."
-              : "Isi form untuk menambahkan area baru."}
-          </DialogDescription>
-        </DialogHeader>
+        <div style={{ maxWidth: "800px", width: "100%" }}>
+          <DialogHeader>
+            <DialogTitle>
+              {initialData ? "Edit Area" : "Tambah Area Baru"}
+            </DialogTitle>
+            <DialogDescription>
+              {initialData
+                ? "Ubah detail area yang sudah ada."
+                : "Isi form untuk menambahkan area baru."}
+            </DialogDescription>
+          </DialogHeader>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <Input
-            placeholder="Nama Area"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <Input
-            placeholder="Alamat"
-            value={alamat}
-            onChange={(e) => setAlamat(e.target.value)}
-          />
-          <Input
-            type="number"
-            placeholder="Radius (meter)"
-            value={radius}
-            onChange={(e) => setRadius(Number(e.target.value))}
-          />
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <Input
+              placeholder="Nama Area"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <Input
+              placeholder="Alamat"
+              value={alamat}
+              onChange={(e) => setAlamat(e.target.value)}
+            />
+            <Input
+              type="number"
+              placeholder="Radius (meter)"
+              value={radius}
+              onChange={(e) => setRadius(Number(e.target.value))}
+            />
 
-          {/* Peta Leaflet */}
-          <div
-            id="map"
-            style={{
-              width: "100%",
-              height: "300px",
-              marginTop: "10px",
-              border: "1px solid #ccc",
-            }}
-          ></div>
+            {/* Map untuk pilih lokasi */}
+            <div style={{ height: "400px", border: "1px solid #ddd" }}>
+              <LeafletMap
+                location={location}
+                radius={radius}
+                setLocation={(loc) => setLocation(loc)}
+              />
+            </div>
 
-          <Button onClick={handleSubmit}>
-            {initialData ? "Simpan Perubahan" : "Tambah Area"}
-          </Button>
+            <Button onClick={handleSubmit}>
+              {initialData ? "Simpan Perubahan" : "Tambah Area"}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

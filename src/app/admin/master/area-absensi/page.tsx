@@ -1,16 +1,24 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import "@/styles/areaabsensi.css";
-import ModalFormArea from "@/components/ModalFormArea";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
+
+// 1. Definisikan komponen dinamis di luar, TANPA useMemo
+const ModalFormArea = dynamic(
+  () => import("@/components/ModalFormArea"),
+  { 
+    loading: () => <p>Memuat formulir...</p>, // Opsional: tampilkan pesan loading
+    ssr: false // Kuncinya tetap di sini
+  }
+);
 
 export default function AreaAbsensiPage() {
   const [areas, setAreas] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editData, setEditData] = useState<any>(null);
-
-  const [deleteTarget, setDeleteTarget] = useState<any>(null); // area yang mau dihapus
+  const [deleteTarget, setDeleteTarget] = useState<any>(null);
 
   useEffect(() => {
     fetchAreas();
@@ -27,7 +35,7 @@ export default function AreaAbsensiPage() {
   }
 
   function handleTambahArea() {
-    setEditData(null); // reset ke mode tambah
+    setEditData(null);
     setIsModalOpen(true);
   }
 
@@ -42,19 +50,15 @@ export default function AreaAbsensiPage() {
 
   async function handleSubmitArea(data: any) {
     try {
-      if (data.id) {
-        await fetch(`/api/master/area-absensi/${data.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-      } else {
-        await fetch(`/api/master/area-absensi`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-      }
+      const method = data.id ? "PUT" : "POST";
+      const url = data.id ? `/api/master/area-absensi/${data.id}` : "/api/master/area-absensi";
+      
+      await fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
       fetchAreas();
     } catch (err) {
       console.error("Gagal simpan area", err);
@@ -78,7 +82,7 @@ export default function AreaAbsensiPage() {
   return (
     <div className="area-absensi-container">
       <h1 className="page-title">Daftar Area Absensi</h1>
-
+      
       <div className="header-actions">
         <button className="primary-button" onClick={handleTambahArea}>
           + Tambah Area Baru
@@ -131,15 +135,13 @@ export default function AreaAbsensiPage() {
         </table>
       </div>
 
-      {/* Modal Tambah/Edit */}
+      {/* Gunakan komponen dinamis seperti biasa di dalam JSX */}
       <ModalFormArea
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleSubmitArea}
         initialData={editData}
       />
-
-      {/* Modal Hapus */}
       <ConfirmDeleteModal
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}

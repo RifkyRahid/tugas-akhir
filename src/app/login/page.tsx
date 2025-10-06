@@ -1,5 +1,6 @@
-"use client";
 
+"use client";
+import Swal from 'sweetalert2';
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import "./login.css";
@@ -22,20 +23,33 @@ export default function LoginPage() {
 
     const data = await res.json();
     if (res.ok) {
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          userId: data.userId,
-          role: data.role,
-        })
-      );
-      if (data.role === "admin") {
-        router.push("/admin/dashboard");
-      } else {
-        router.push("/karyawan/dashboard");
-      }
+      Swal.fire({
+        icon: 'success',
+        title: 'Login berhasil!',
+        text: data.role === 'admin' ? 'Selamat datang Admin!' : 'Selamat datang Karyawan!',
+        timer: 1500,
+        showConfirmButton: false,
+      }).then(() => {
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            userId: data.userId,
+            role: data.role,
+          })
+        );
+        if (data.role === "admin") {
+          router.push("/admin/dashboard");
+        } else {
+          router.push("/karyawan/dashboard");
+        }
+      });
     } else {
-      setError(data.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Login gagal',
+        text: data.message || 'Email atau password salah.',
+      });
+      setError("");
     }
   };
 
@@ -45,7 +59,7 @@ export default function LoginPage() {
         <h2>Sign in</h2>
         <p className="small-text">Gunakan akun anda</p>
 
-        {error && <p className="error-text">{error}</p>}
+  {/* Error text dihandle oleh SweetAlert2 */}
 
         <form onSubmit={handleSubmit}>
           <input
