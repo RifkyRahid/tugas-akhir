@@ -3,9 +3,9 @@ import React from "react";
 import "@/styles/karyawanLayout.css";
 
 export default function KaryawanLayout({ children }: { children: React.ReactNode }) {
+  // Gunakan div pembungkus agar Flexbox bekerja dengan baik
   return (
-    <div className="karyawan-layout">
-      <div className="sidebar-spacer" />
+    <div className="layout-container">
       <main className="karyawan-main">
         {children}
       </main>

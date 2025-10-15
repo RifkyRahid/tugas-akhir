@@ -1,93 +1,168 @@
+/* === GAYA UNTUK DESKTOP (Tampilan Utama) === */
+
 .sidebar {
-  width: 220px;
-  background-color: #003366; /* biru tua */
-  color: #fff;
-  padding: 2rem 1rem;
+  width: 250px;
   height: 100vh;
+  background-color: #003366;
+  color: white;
+  display: flex;
+  flex-direction: column; /* Mengatur tombol logout agar selalu di bawah */
   position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1002; /* Pastikan di atas overlay dan header */
+  transition: transform 0.3s ease-in-out;
+}
+
+.sidebarContent {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1; /* Membuat konten ini mengisi ruang yang tersedia */
+  overflow-y: auto; /* Memberi scroll jika menu sangat panjang */
+}
+
+.sidebarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
 }
 
 .brand {
   font-size: 1.5rem;
   font-weight: bold;
-  margin-bottom: 2rem;
 }
 
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem; /* Jarak antar menu */
+  flex-grow: 1; /* Mendorong logout ke bawah */
 }
 
-/* Untuk menu utama yg nested */
 .menuGroup {
   margin-bottom: 1rem;
 }
 
 .groupLabel {
-  font-weight: bold;
+  font-size: 0.8rem;
+  color: #a0b3c4;
   margin-bottom: 0.5rem;
-  padding-left: 0.5rem;
-  font-size: 0.95rem;
-  color: #ffcc00; /* kuning dari palet kita */
+  padding: 0 10px;
 }
 
-/* Link submenu */
 .link {
-  color: #fff;
-  text-decoration: none;
-  font-weight: 500;
-  padding: 0.4rem 0.5rem;
-  border-radius: 5px;
   display: block;
-  margin-left: 1rem;
+  width: 100%;
+  text-align: left;
+  color: white;
+  text-decoration: none;
+  padding: 10px;
+  border-radius: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem; /* Samakan ukuran font */
+  transition: background-color 0.2s ease;
 }
 
 .link:hover {
-  background-color: #005fa3;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .logoutBtn {
-  margin-top: 10rem;
-  background-color: #e63946;
-  color: white;
-  border: none;
-  padding: 0.6rem 1rem;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: 500;
+  margin-top: 1rem; /* Jarak dari menu terakhir */
+  background-color: #e74c3c;
+  font-weight: bold;
 }
 
 .logoutBtn:hover {
-  background-color: #d62839;
+  background-color: #c0392b;
 }
+
+/* Sembunyikan semua elemen khusus mobile di desktop */
+.mobileHeader, .closeBtn, .overlay {
+  display: none;
+}
+
+/* === GAYA UNTUK MOBILE (Layar Kecil) === */
 
 @media (max-width: 768px) {
-  .sidebar {
+  /* 1. Tampilkan header mobile */
+  .mobileHeader {
+    display: flex;
+    align-items: center;
+    background-color: #003366;
+    color: white;
+    padding: 10px 15px;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    position: relative;
-    height: auto;
+    height: 60px; /* Beri tinggi tetap */
+    z-index: 1001; /* Di atas konten, di bawah sidebar */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  
+  .hamburger {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+  }
+  
+  .mobileBrand {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-left: 15px;
   }
 
-  .nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  /* 2. Logika untuk sidebar geser */
+  .sidebar {
+    transform: translateX(-100%); /* Sembunyikan sidebar di luar layar */
   }
 
-  .link {
-    margin-left: 0;
-    padding: 0.4rem 0.8rem;
+  .sidebar.open {
+    transform: translateX(0); /* Munculkan sidebar saat kelas .open ditambahkan */
+    box-shadow: 2px 0 15px rgba(0,0,0,0.2);
+  }
+  
+  /* Sembunyikan brand utama di sidebar versi mobile */
+  .sidebarHeader .brand {
+    display: none;
   }
 
-  .logoutBtn {
-  margin-top: auto;
-  background-color: #e63946;
-  color: white;
-  border: none;
-  padding: 0.6rem 1rem;
-  border-radius: 5px;
-  cursor: pointer;
-  font-weight: 500;
+  /* Tampilkan tombol close di mobile dan atur warnanya */
+  .closeBtn {
+    display: block;
+    background: none;
+    border: none;
+    color: white; /* Warna 'x' menjadi putih */
+    font-size: 28px;
+    cursor: pointer;
+  }
+  
+  /* 3. Logika untuk overlay gelap */
+  .overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+  }
+
+  /* Gunakan selector saudara umum (~) untuk menemukan overlay */
+  .sidebar.open ~ .overlay {
+    opacity: 1;
+    visibility: visible;
+  }
 }
-}
+

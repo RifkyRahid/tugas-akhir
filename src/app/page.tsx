@@ -3,7 +3,7 @@
 import Swal from 'sweetalert2';
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import "./login.css";
+import "../styles/login.css";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -58,9 +58,6 @@ export default function LoginPage() {
       <div className="login-box">
         <h2>Sign in</h2>
         <p className="small-text">Gunakan akun anda</p>
-
-  {/* Error text dihandle oleh SweetAlert2 */}
-
         <form onSubmit={handleSubmit}>
           <input
             type="email"

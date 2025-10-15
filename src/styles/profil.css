@@ -1,0 +1,134 @@
+/* Gaya untuk card utama, sekarang dengan ukuran yang lebih ideal */
+.dashboard-card {
+  background: white;
+  padding: 2.5rem; /* Padding lebih luas untuk desktop */
+  border-radius: 12px;
+  border-left: 8px solid #f1c40f;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  
+  /* --- PERBAIKAN DESKTOP --- */
+  width: 100%;
+  max-width: 960px;   /* Batasi lebar maksimal agar pas di layar */
+  margin: 0 auto;     /* Posisikan card di tengah area konten */
+  height: fit-content;
+}
+
+.dashboard-card h1 {
+  color: #004073;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.dashboard-card p {
+  color: #333333;
+  font-size: 1rem;
+  margin-top: 0;
+}
+
+/* Gaya khusus untuk form di halaman profil */
+.profil-form {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* Jarak antar form-group di desktop */
+  max-width: 450px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.form-group input {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+
+.submit-button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  background-color: #007bff;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 1rem;
+  align-self: flex-start;
+}
+
+.submit-button:hover {
+  background-color: #0056b3;
+}
+
+.submit-button:disabled {
+  background-color: #a0a0a0;
+  cursor: not-allowed;
+}
+
+/* ... (Pesan error/sukses tidak berubah) ... */
+.error-message, .success-message {
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+}
+.error-message {
+  color: #d9534f;
+  background-color: #f2dede;
+}
+.success-message {
+  color: #5cb85c;
+  background-color: #dff0d8;
+}
+
+
+/* === PERBAIKAN MOBILE DI SINI === */
+@media (max-width: 768px) {
+  .dashboard-card {
+    /* Menambahkan margin untuk memberi jarak dari tepi layar */
+    margin-top: 1rem;
+    
+    /* Mengurangi padding internal agar lebih ringkas */
+    padding: 1.5rem 1rem; /* Memberi padding kiri-kanan yang lebih kecil */
+    overflow-x: hidden;   /* Mencegah konten meluber keluar card */
+  }
+
+  .dashboard-card h1 {
+    font-size: 1.3rem; /* Perkecil lagi judul agar pas */
+    margin-bottom: 8px;
+  }
+
+  .dashboard-card p {
+    font-size: 0.85rem; /* Perkecil lagi teks deskripsi */
+    line-height: 1.5;
+    /* Memaksa teks untuk turun ke bawah jika terlalu panjang */
+    word-wrap: break-word; 
+  }
+
+  .profil-form {
+    margin-top: 1.5rem;
+    gap: 1.2rem; /* Sesuaikan jarak antar input */
+    max-width: 100%;
+  }
+
+  .form-group input, .submit-button {
+    padding: 12px 14px; /* Sedikit perbesar padding vertikal untuk tap */
+    font-size: 0.9rem;
+  }
+}

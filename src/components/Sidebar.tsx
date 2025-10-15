@@ -1,28 +1,32 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { logoutUser } from '@/lib/auth'
 import styles from './layout/Sidebar.module.css'
 
+// --- Interface dan Tipe Data ---
 interface SidebarProps {
   role: 'admin' | 'karyawan'
 }
+type MenuItem = {
+  label: string;
+  href?: string;
+  isLogout?: boolean; // Tipe baru untuk tombol logout
+  subMenu?: { label: string; href: string }[];
+};
 
 export default function Sidebar({ role }: SidebarProps) {
   const router = useRouter()
+  const [isOpen, setIsOpen] = useState(false);
 
-  const handleLogout = () => {
-    logoutUser()
-    router.push('/login')
+  const handleLogout = async () => {
+    await logoutUser();
+    router.push('/');
   }
 
-  type MenuItem = {
-    label: string;
-    href?: string;
-    subMenu?: { label: string; href: string }[];
-  };
-
+  // --- Definisi Menu (Admin dan Karyawan) ---
   const menuAdmin: MenuItem[] = [
     { label: 'Dashboard', href: '/admin/dashboard' },
     {
@@ -41,46 +45,80 @@ export default function Sidebar({ role }: SidebarProps) {
       ]
     },
     { label: 'Kalender', href: '/admin/kalender' },
+    { label: 'Logout', isLogout: true }, // Tombol Logout dipindah ke sini
   ];
 
   const menuKaryawan: MenuItem[] = [
     { label: 'Dashboard', href: '/karyawan/dashboard' },
     { label: 'Absensi Saya', href: '/karyawan/absensi' },
     { label: 'Ajukan Izin', href: '/karyawan/izin' },
+    { label: 'Profil Saya', href: '/karyawan/profil' },
+    { label: 'Logout', isLogout: true }, // Tombol Logout dipindah ke sini
   ];
 
   const menu = role === 'admin' ? menuAdmin : menuKaryawan;
 
+  const sidebarClasses = `${styles.sidebar} ${isOpen ? styles.open : ''}`;
+
   return (
-    <aside className={styles.sidebar}>
-      <div className={styles.brand}>
-        HR-RAM <hr style={{ textAlign: "left", marginLeft: 0 }} />
-      </div>
+    <>
+      {/* Header khusus untuk tampilan mobile */}
+      <header className={styles.mobileHeader}>
+        <button 
+          className={styles.hamburger} 
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label="Toggle navigation"
+        >
+          ☰
+        </button>
+        <div className={styles.mobileBrand}>HR-RAM</div>
+      </header>
 
-      <nav className={styles.nav}>
-        {menu.map(item => (
-          item.subMenu ? (
-            <div key={item.label} className={styles.menuGroup}>
-              <div className={styles.groupLabel}>{item.label}</div>
-              {item.subMenu.map(sub => (
-                <Link key={sub.href} href={sub.href} className={styles.link}>
-                  {sub.label}
-                </Link>
-              ))}
-            </div>
-          ) : (
-            item.href ? (
-              <Link key={item.href} href={item.href} className={styles.link}>
-                {item.label}
-              </Link>
-            ) : null
-          )
-        ))}
-      </nav>
+      {/* Sidebar utama */}
+      <aside className={sidebarClasses}>
+        <div className={styles.sidebarContent}>
+          <div className={styles.sidebarHeader}>
+            <div className={styles.brand}>HR-RAM</div>
+            <button className={styles.closeBtn} onClick={() => setIsOpen(false)}>&times;</button>
+          </div>
 
-      <button className={styles.logoutBtn} onClick={handleLogout}>
-        Logout
-      </button>
-    </aside>
+          <nav className={styles.nav}>
+            {menu.map(item => {
+              if (item.isLogout) {
+                return (
+                  <button key="logout-btn" className={`${styles.link} ${styles.logoutBtn}`} onClick={handleLogout}>
+                    {item.label}
+                  </button>
+                );
+              }
+              if (item.subMenu) {
+                return (
+                  <div key={item.label} className={styles.menuGroup}>
+                    <div className={styles.groupLabel}>{item.label}</div>
+                    {item.subMenu.map(sub => (
+                      <Link key={sub.href} href={sub.href} className={styles.link} onClick={() => setIsOpen(false)}>
+                        {sub.label}
+                      </Link>
+                    ))}
+                  </div>
+                );
+              }
+              if (item.href) {
+                return (
+                  <Link key={item.href} href={item.href} className={styles.link} onClick={() => setIsOpen(false)}>
+                    {item.label}
+                  </Link>
+                );
+              }
+              return null;
+            })}
+          </nav>
+        </div>
+      </aside>
+
+      {/* Overlay gelap saat sidebar mobile aktif */}
+      {isOpen && <div className={styles.overlay} onClick={() => setIsOpen(false)}></div>}
+    </>
   )
 }
+
