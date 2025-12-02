@@ -1,14 +1,14 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { logoutUser } from '@/lib/auth'
-import styles from './layout/Sidebar.module.css'
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { logoutUser } from "@/lib/auth";
+import styles from "./layout/Sidebar.module.css";
 
 // --- Interface dan Tipe Data ---
 interface SidebarProps {
-  role: 'admin' | 'karyawan'
+  role: "admin" | "karyawan";
 }
 type MenuItem = {
   label: string;
@@ -18,54 +18,60 @@ type MenuItem = {
 };
 
 export default function Sidebar({ role }: SidebarProps) {
-  const router = useRouter()
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = async () => {
     await logoutUser();
-    router.push('/');
-  }
+    router.push("/");
+  };
 
   // --- Definisi Menu (Admin dan Karyawan) ---
   const menuAdmin: MenuItem[] = [
-    { label: 'Dashboard', href: '/admin/dashboard' },
+    { label: "Dashboard", href: "/admin/dashboard" },
     {
-      label: 'Absensi',
+      label: "Absensi",
       subMenu: [
-        { label: 'Kelola Absensi', href: '/admin/absensi' },
-        { label: 'Absensi Pending', href: '/admin/absensi-pending' },
-        { label: 'Area Absensi', href: '/admin/master/area-absensi' },
-      ]
+        { label: "Kelola Absensi", href: "/admin/absensi" },
+        { label: "Absensi Pending", href: "/admin/absensi-pending" },
+        { label: "Area Absensi", href: "/admin/master/area-absensi" },
+      ],
     },
     {
-      label: 'Karyawan',
+      label: "Karyawan",
       subMenu: [
-        { label: 'Kelola Karyawan', href: '/admin/karyawan' },
-        { label: 'Pengajuan Karyawan', href: '/admin/pengajuan' },
-      ]
+        { label: "Kelola Karyawan", href: "/admin/karyawan" },
+        { label: "Pengajuan Karyawan", href: "/admin/pengajuan" },
+      ],
     },
-    { label: 'Kalender', href: '/admin/kalender' },
-    { label: 'Logout', isLogout: true }, // Tombol Logout dipindah ke sini
+    {
+      label: "Ekstra",
+      subMenu: [
+        { label: "Kalender", href: "/admin/kalender" },
+        { label: "Pengaturan", href: "/admin/pengaturan" },
+      ],
+    },
+    { label: "Logout", isLogout: true },
   ];
 
   const menuKaryawan: MenuItem[] = [
-    { label: 'Dashboard', href: '/karyawan/dashboard' },
-    { label: 'Absensi Saya', href: '/karyawan/absensi' },
-    { label: 'Ajukan Izin', href: '/karyawan/izin' },
-    { label: 'Profil Saya', href: '/karyawan/profil' },
-    { label: 'Logout', isLogout: true }, // Tombol Logout dipindah ke sini
+    { label: "Dashboard", href: "/karyawan/dashboard" },
+    { label: "Absensi Saya", href: "/karyawan/absensi" },
+    { label: "Ajukan Izin", href: "/karyawan/izin" },
+    { label: "Profil Saya", href: "/karyawan/profil" },
+    { label: "Logout", isLogout: true }, // Tombol Logout dipindah ke sini
   ];
 
-  const menu = role === 'admin' ? menuAdmin : menuKaryawan;
+  const menu = role === "admin" ? menuAdmin : menuKaryawan;
 
-  const sidebarClasses = `${styles.sidebar} ${isOpen ? styles.open : ''}`;
+  const sidebarClasses = `${styles.sidebar} ${isOpen ? styles.open : ""}`;
 
   return (
     <>
       {/* Header khusus untuk tampilan mobile */}
       <header className={styles.mobileHeader}>
-        <button 
-          className={styles.hamburger} 
+        <button
+          className={styles.hamburger}
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle navigation"
         >
@@ -79,14 +85,23 @@ export default function Sidebar({ role }: SidebarProps) {
         <div className={styles.sidebarContent}>
           <div className={styles.sidebarHeader}>
             <div className={styles.brand}>HR-RAM</div>
-            <button className={styles.closeBtn} onClick={() => setIsOpen(false)}>&times;</button>
+            <button
+              className={styles.closeBtn}
+              onClick={() => setIsOpen(false)}
+            >
+              &times;
+            </button>
           </div>
 
           <nav className={styles.nav}>
-            {menu.map(item => {
+            {menu.map((item) => {
               if (item.isLogout) {
                 return (
-                  <button key="logout-btn" className={`${styles.link} ${styles.logoutBtn}`} onClick={handleLogout}>
+                  <button
+                    key="logout-btn"
+                    className={`${styles.link} ${styles.logoutBtn}`}
+                    onClick={handleLogout}
+                  >
                     {item.label}
                   </button>
                 );
@@ -95,8 +110,13 @@ export default function Sidebar({ role }: SidebarProps) {
                 return (
                   <div key={item.label} className={styles.menuGroup}>
                     <div className={styles.groupLabel}>{item.label}</div>
-                    {item.subMenu.map(sub => (
-                      <Link key={sub.href} href={sub.href} className={styles.link} onClick={() => setIsOpen(false)}>
+                    {item.subMenu.map((sub) => (
+                      <Link
+                        key={sub.href}
+                        href={sub.href}
+                        className={styles.link}
+                        onClick={() => setIsOpen(false)}
+                      >
                         {sub.label}
                       </Link>
                     ))}
@@ -105,7 +125,12 @@ export default function Sidebar({ role }: SidebarProps) {
               }
               if (item.href) {
                 return (
-                  <Link key={item.href} href={item.href} className={styles.link} onClick={() => setIsOpen(false)}>
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={styles.link}
+                    onClick={() => setIsOpen(false)}
+                  >
                     {item.label}
                   </Link>
                 );
@@ -117,8 +142,9 @@ export default function Sidebar({ role }: SidebarProps) {
       </aside>
 
       {/* Overlay gelap saat sidebar mobile aktif */}
-      {isOpen && <div className={styles.overlay} onClick={() => setIsOpen(false)}></div>}
+      {isOpen && (
+        <div className={styles.overlay} onClick={() => setIsOpen(false)}></div>
+      )}
     </>
-  )
+  );
 }
-

@@ -2,133 +2,158 @@ import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import fs from "fs";
 import path from "path";
+import { getUserIdFromSession } from "@/lib/auth.server";
+import { haversineDistance } from "@/utils/distance";
 
-function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const toRad = (x: number) => (x * Math.PI) / 180;
-  const R = 6371000; // meter
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) *
-      Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
+// === METHOD POST: UNTUK ABSEN MASUK ===
 export async function POST(req: NextRequest) {
-  const userId = req.cookies.get("userId")?.value;
-  if (!userId) {
-    return NextResponse.json(
-      { error: "User belum login" },
-      { status: 401 }
-    );
-  }
+  try {
+    const userId = getUserIdFromSession(req);
+    if (!userId) {
+      return NextResponse.json({ message: "Sesi habis, silakan login ulang." }, { status: 401 });
+    }
 
-  const now = new Date();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
+    const form = await req.formData();
+    const file = form.get("photo") as File | null;
+    const latitude = parseFloat(form.get("latitude") as string);
+    const longitude = parseFloat(form.get("longitude") as string);
+    // Kita hapus pengambilan 'keterangan' manual di sini karena user belum input
 
-  // 🔹 1. Ganti dari req.json() → req.formData()
-  const form = await req.formData();
+    if (!file) {
+      return NextResponse.json({ message: "Foto wajib diambil!" }, { status: 400 });
+    }
 
-  // 🔹 2. Ambil file & data lain
-  const file = form.get("photo") as File | null;
-  const latitude = parseFloat(form.get("latitude") as string);
-  const longitude = parseFloat(form.get("longitude") as string);
+    // --- PROSES UPLOAD FOTO ---
+    const bytes = await file.arrayBuffer();
+    const buffer = new Uint8Array(bytes);
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-  if (!file) {
-    return NextResponse.json(
-      { error: "Foto tidak ditemukan" },
-      { status: 400 }
-    );
-  }
+    const filename = `${Date.now()}-${file.name.replace(/\s/g, "_")}`;
+    const filepath = path.join(uploadDir, filename);
+    fs.writeFileSync(filepath, buffer);
+    const photoUrl = `/uploads/${filename}`;
 
-  // 🔹 3. Simpan file ke folder public/uploads
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
+    // --- CEK VALIDASI ---
+    const now = new Date();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
+    const existing = await prisma.attendance.findFirst({
+      where: { userId, date: { gte: today } },
+    });
+    if (existing) {
+      return NextResponse.json({ message: "Anda sudah melakukan absen hari ini." }, { status: 400 });
+    }
 
-  const filename = `${Date.now()}-${file.name}`;
-  const filepath = path.join(uploadDir, filename);
-  fs.writeFileSync(filepath, buffer);
+    const userWithArea = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { area: true },
+    });
 
-  // url file yg bisa diakses frontend
-  const photoUrl = `/uploads/${filename}`;
+    let status: "hadir" | "pending" = "hadir";
+    let finalKeterangan = "Tepat Waktu";
+    let lateMinutes = 0;
+    let distance = 0;
+    let areaName = "Lokasi Tidak Diketahui";
 
-  // pastikan 1x absen per hari
-  const existing = await prisma.attendance.findFirst({
-    where: {
-      userId,
-      date: {
-        gte: today,
-        lt: tomorrow,
+    // --- CEK JAM KERJA DARI DB (UPDATE BARU) ---
+    // 1. Ambil settingan jam kerja dari AppConfig
+    const config = await prisma.appConfig.findFirst();
+    
+    // Fallback jika admin belum pernah setting (Default jam 09:00)
+    const jamMasukSetting = config?.startWorkTime || "09:00"; 
+    
+    // 2. Konversi string "HH:mm" ke Object Date hari ini
+    const [jam, menit] = jamMasukSetting.split(":").map(Number);
+    const batasTepatWaktu = new Date();
+    batasTepatWaktu.setHours(jam, menit, 0, 0);
+
+    // --- LOGIKA UTAMA ---
+    if (userWithArea?.area) {
+      const { area } = userWithArea;
+      areaName = area.name; // Simpan nama area untuk respon
+      
+      // 1. Hitung Jarak
+      distance = haversineDistance(latitude, longitude, area.latitude, area.longitude);
+      
+      // 2. Logika Strict Geofencing
+      if (distance > area.radius) {
+        status = "pending";
+        // Default system note, nanti di-update via PATCH oleh user jika pending
+        finalKeterangan = `Diluar jangkauan (${Math.round(distance)}m)`;
+      } else {
+        // Jika dalam area, cek apakah Terlambat berdasarkan jam dari DB
+        if (now > batasTepatWaktu) {
+            lateMinutes = Math.floor((now.getTime() - batasTepatWaktu.getTime()) / 60000);
+            finalKeterangan = `Terlambat (Masuk: ${jamMasukSetting})`;
+        }
+      }
+    } else {
+        finalKeterangan = "Area belum diatur oleh Admin";
+    }
+
+    // --- SIMPAN DATA ---
+    const absen = await prisma.attendance.create({
+      data: {
+        userId,
+        date: today,
+        checkIn: now,
+        status: status,
+        keterangan: finalKeterangan,
+        lateMinutes: status === 'hadir' ? lateMinutes : null,
+        photo: photoUrl,
+        latitude,
+        longitude,
+        areaId: userWithArea?.area?.id,
       },
-    },
-  });
-  if (existing) {
-    return NextResponse.json(
-      { error: "Sudah absen hari ini" },
-      { status: 400 }
-    );
+    });
+
+    // --- RESPON PENTING ---
+    // Kita kirimkan areaName dan attendanceId agar frontend bisa minta alasan
+    if (status === 'pending') {
+        return NextResponse.json({
+            status: 'pending',
+            message: `Lokasi Anda tidak sesuai.`,
+            areaName: areaName,
+            distance: Math.round(distance),
+            attendanceId: absen.id // ID ini dipakai untuk PATCH alasan nanti
+        }, { status: 201 });
+    }
+
+    return NextResponse.json({
+      status: 'success',
+      message: "Absen Berhasil! Selamat bekerja.",
+    }, { status: 201 });
+
+  } catch (error) {
+    console.error("Check-in error:", error);
+    return NextResponse.json({ message: "Terjadi kesalahan server." }, { status: 500 });
   }
-
-  const batasTepatWaktu = new Date();
-  batasTepatWaktu.setHours(9, 0, 0, 0);
-
-  let lateMinutes: number | null = null;
-  if (now > batasTepatWaktu) {
-    const diffMs = now.getTime() - batasTepatWaktu.getTime();
-    lateMinutes = Math.floor(diffMs / 1000 / 60);
-  }
-
-  // ambil area absensi aktif
-  const area = await prisma.attendanceArea.findFirst();
-  if (!area) {
-    return NextResponse.json(
-      { error: "Area absensi belum diset" },
-      { status: 400 }
-    );
-  }
-
-  // cek jarak
-  let status: "hadir" | "pending" = "pending";
-  const distance = haversine(
-    latitude,
-    longitude,
-    area.latitude,
-    area.longitude
-  );
-  console.log("Jarak:", distance, "meter");
-
-  if (distance <= area.radius) {
-    status = "hadir";
-  }
-
-  const keterangan =
-    now > batasTepatWaktu ? "Terlambat" : "Tepat Waktu";
-
-  const absen = await prisma.attendance.create({
-    data: {
-      userId,
-      date: now, // simpan full timestamp check-in
-      checkIn: now,
-      status,
-      keterangan,
-      lateMinutes,
-      photo: photoUrl, // 🔹 simpan url foto
-      latitude,
-      longitude,
-    },
-  });
-
-  return NextResponse.json(absen, { status: 201 });
 }
 
+// === METHOD PATCH: UNTUK UPDATE ALASAN (JIKA DILUAR LOKASI) ===
+export async function PATCH(req: NextRequest) {
+  try {
+    const userId = getUserIdFromSession(req);
+    if (!userId) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+    const body = await req.json();
+    const { attendanceId, reason } = body;
+
+    if (!attendanceId || !reason) {
+      return NextResponse.json({ message: "Data tidak lengkap" }, { status: 400 });
+    }
+
+    // Update keterangan absensi
+    await prisma.attendance.update({
+      where: { id: attendanceId },
+      data: { keterangan: reason }
+    });
+
+    return NextResponse.json({ message: "Alasan berhasil disimpan" });
+  } catch (error) {
+    console.error("Error update reason:", error);
+    return NextResponse.json({ message: "Gagal menyimpan alasan" }, { status: 500 });
+  }
+}

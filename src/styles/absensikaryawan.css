@@ -1,0 +1,72 @@
+/* Container utama halaman */
+.pageContainer {
+  position: relative;
+  padding: 2rem; /* Memberi jarak dari tepi layout */
+}
+
+/* Card utama untuk absen (tengah) */
+.mainCard {
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Wrapper untuk tombol kembali agar tidak ada garis bawah */
+.backLink {
+  text-decoration: none;
+  display: inline-block; /* Penting agar link tidak memenuhi baris */
+  margin-top: 16px;
+}
+
+/* Card untuk bagian riwayat */
+.historyCard {
+  margin-top: 24px;
+}
+
+.historyTitle {
+  color: #1e40af;
+  margin-bottom: 1rem;
+}
+
+/* --- PERBAIKAN UTAMA UNTUK TABEL --- */
+
+.historyTableWrapper {
+  overflow-x: auto; /* Memberi scroll horizontal hanya jika benar-benar perlu di layar kecil */
+}
+
+.historyTable {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+  table-layout: fixed; /* Memaksa kolom memiliki lebar yang sama */
+}
+
+.historyTable th,
+.historyTable td {
+  border: 1px solid #e5e7eb; /* Warna border lebih soft */
+  padding: 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.historyTable th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Mengatur agar teks tidak pecah dan rata tengah */
+.historyTable td {
+  white-space: nowrap;
+  text-align: center;
+}
+
+.actionButton {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}

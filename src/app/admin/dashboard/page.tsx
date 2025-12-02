@@ -166,8 +166,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: "24px", marginTop: "32px" }}>
-        {/* Grafik */}
+      {/* <div style={{ display: "flex", gap: "24px", marginTop: "32px" }}>
         <div className="grafik-absensi-card">
           <h3>Grafik Absensi 7 Hari Terakhir</h3>
           <div className="grafik-wrapper">
@@ -186,7 +185,7 @@ export default function AdminDashboard() {
             ))}
           </div>
         </div>
-      </div>
+      </div> */}
       <RekapBulananCard/>
     </div>
   );

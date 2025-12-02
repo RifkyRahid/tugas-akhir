@@ -8,6 +8,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x"]
 }
 
 datasource db {
@@ -124,3 +125,9 @@ enum LeaveStatus {
   ditolak
 }
 
+model AppConfig {
+  id            Int      @id @default(autoincrement())
+  startWorkTime String   @default("09:00")
+  endWorkTime   String   @default("17:00")
+  updatedAt     DateTime @updatedAt
+}

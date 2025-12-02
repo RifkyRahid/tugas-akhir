@@ -14,7 +14,7 @@ export async function PUT(
       where: { id: Number(id) },
       data: {
         name: body.nama_area,
-        latitude: body.latitude,
+        latitude: body.latitude, 
         longitude: body.longitude,
         radius: body.radius,
         alamat: body.alamat,

@@ -1,0 +1,114 @@
+/* Container utama untuk seluruh halaman */
+.pageContainer {
+  position: relative;
+}
+
+/* Card utama untuk tombol absen (di tengah atas) */
+.mainCard {
+  max-width: 500px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Wrapper untuk tombol "Kembali" untuk menghilangkan garis bawah dari Link */
+.backLink {
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 16px;
+}
+
+/* Card untuk bagian riwayat (harian dan bulanan) */
+.historyCard {
+  margin-top: 24px;
+}
+
+.historyTitle {
+  color: #1e40af;
+  margin-bottom: 1rem;
+}
+
+/* Wrapper untuk filter (Pilih Tanggal, Bulan, Tahun) */
+.filterWrapper {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+/* --- PERBAIKAN UTAMA UNTUK TABEL --- */
+
+/* Wrapper untuk tabel agar bisa scroll horizontal di layar kecil */
+.historyTableWrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.historyTable {
+  width: 100%;
+  margin-top: 16px;
+  border-collapse: collapse;
+  table-layout: fixed; /* Memaksa kolom memiliki lebar yang konsisten */
+  font-size: 0.9rem;
+}
+
+.historyTable th,
+.historyTable td {
+  border: 1px solid #e5e7eb; /* Warna border lebih lembut */
+  padding: 12px;
+  text-align: center; /* Konten di tengah agar rapi */
+  vertical-align: middle;
+  white-space: nowrap; /* Mencegah teks turun ke bawah */
+}
+
+.historyTable th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Tombol "Lihat Foto" di dalam tabel */
+.actionButton {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+.actionButton:hover {
+  background-color: #2563eb;
+}
+
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background-color: #f8f8f8;
+}
+
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 2rem 2rem 2rem 240px;
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.dashboard-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  border-left: 8px solid #f1c40f;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  box-sizing: border-box;
+
+}
