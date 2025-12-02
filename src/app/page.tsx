@@ -1,55 +1,79 @@
-
 "use client";
 import Swal from 'sweetalert2';
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import "../styles/login.css";
+import "../styles/login.css"; // Pastikan path css ini benar sesuai struktur folder kamu
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email, password }),
+
+    // 1. Tampilkan Loading Sebelum Fetch
+    Swal.fire({
+      title: 'Sedang Masuk...',
+      text: 'Memverifikasi akun anda.',
+      allowOutsideClick: false, // User tidak bisa klik luar untuk tutup
+      didOpen: () => {
+        Swal.showLoading(); // Tampilkan animasi loading bawaan SweetAlert
+      }
     });
 
-    const data = await res.json();
-    if (res.ok) {
-      Swal.fire({
-        icon: 'success',
-        title: 'Login berhasil!',
-        text: data.role === 'admin' ? 'Selamat datang Admin!' : 'Selamat datang Karyawan!',
-        timer: 1500,
-        showConfirmButton: false,
-      }).then(() => {
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            userId: data.userId,
-            role: data.role,
-          })
-        );
-        if (data.role === "admin") {
-          router.push("/admin/dashboard");
+    try {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          // 2. Jika Sukses -> Loading otomatis terganti alert Sukses
+          Swal.fire({
+            icon: 'success',
+            title: 'Login berhasil!',
+            text: data.role === 'admin' ? 'Selamat datang Admin!' : 'Selamat datang Karyawan!',
+            timer: 1500,
+            showConfirmButton: false,
+          }).then(() => {
+            localStorage.setItem(
+              "user",
+              JSON.stringify({
+                userId: data.userId,
+                role: data.role,
+              })
+            );
+            
+            // Redirect sesuai role
+            if (data.role === "admin") {
+              router.push("/admin/dashboard");
+            } else {
+              router.push("/karyawan/dashboard");
+            }
+          });
         } else {
-          router.push("/karyawan/dashboard");
+          // 3. Jika Gagal (Password salah) -> Loading terganti Error
+          Swal.fire({
+            icon: 'error',
+            title: 'Login gagal',
+            text: data.message || 'Email atau password salah.',
+          });
         }
-      });
-    } else {
-      Swal.fire({
-        icon: 'error',
-        title: 'Login gagal',
-        text: data.message || 'Email atau password salah.',
-      });
-      setError("");
+
+    } catch (error) {
+        // 4. Jika Server Error / Tidak ada koneksi
+        console.error("Login Error:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Gagal Terhubung',
+            text: 'Terjadi kesalahan pada server atau koneksi internet Anda.',
+        });
     }
   };
 
