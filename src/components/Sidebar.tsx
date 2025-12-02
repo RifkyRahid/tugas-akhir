@@ -49,6 +49,7 @@ export default function Sidebar({ role }: SidebarProps) {
       subMenu: [
         { label: "Kalender", href: "/admin/kalender" },
         { label: "Pengaturan", href: "/admin/pengaturan" },
+        { label: "Kelola Admin", href: "/admin/kelola-admin" },
       ],
     },
     { label: "Logout", isLogout: true },
