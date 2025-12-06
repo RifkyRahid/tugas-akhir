@@ -46,7 +46,7 @@ export default function KelolaKaryawanPage() {
   useEffect(() => {
     const user = getUserFromLocalStorage();
     if (!user || user.role !== "admin") {
-      router.push("/login");
+      router.push("/");
     } else {
       fetchData();
     }

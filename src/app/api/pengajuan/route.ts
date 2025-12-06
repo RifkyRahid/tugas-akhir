@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"; // Sesuaikan path import prisma Anda
 import { cookies } from "next/headers";
+import fs from "fs";
+import path from "path";
 
-// ✅ GET untuk ambil data pengajuan
+// ✅ GET: Ambil Riwayat Pengajuan
 export async function GET() {
   try {
     const cookieStore = await cookies();
@@ -24,12 +26,9 @@ export async function GET() {
   }
 }
 
-
-// ✅ POST untuk buat pengajuan
+// ✅ POST: Buat Pengajuan Baru (Support File Upload)
 export async function POST(req: Request) {
   try {
-    const { type, startDate, endDate, reason } = await req.json();
-
     const cookieStore = await cookies();
     const userId = cookieStore.get("userId")?.value;
 
@@ -37,6 +36,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
+    // 1. GANTI req.json() MENJADI req.formData()
+    const formData = await req.formData();
+    
+    // 2. Ambil data dari formData
+    const type = formData.get("type") as string;
+    const startDateStr = formData.get("startDate") as string;
+    const endDateStr = formData.get("endDate") as string;
+    const reason = formData.get("reason") as string;
+    const file = formData.get("attachment") as File | null;
+
+    // 3. Validasi Tipe Cuti
     const allowedTypes = ["cuti", "sakit", "izin"];
     if (!allowedTypes.includes(type)) {
       return NextResponse.json(
@@ -45,10 +55,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // --- LIMIT CUTI TAHUNAN ---
+    // Konversi tanggal string ke Date object
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+
+    // --- 4. LOGIKA LIMIT CUTI TAHUNAN (DIPERTAHANKAN) ---
     if (type === "cuti") {
       const tahunIni = new Date().getFullYear();
-      // Ambil semua pengajuan cuti yang sudah disetujui tahun ini
+      
       const cutiTahunIni = await prisma.leaveRequest.findMany({
         where: {
           userId,
@@ -61,7 +75,6 @@ export async function POST(req: Request) {
         },
       });
 
-      // Hitung total hari cuti yang sudah diambil
       let totalHariCuti = 0;
       for (const pengajuan of cutiTahunIni) {
         const start = new Date(pengajuan.startDate);
@@ -69,33 +82,55 @@ export async function POST(req: Request) {
         totalHariCuti += Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
       }
 
-      // Hitung hari cuti yang diajukan sekarang
       const hariDiajukan =
-        Math.floor((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
       if (totalHariCuti + hariDiajukan > 12) {
         return NextResponse.json(
-          { message: "Limit cuti tahunan sudah tercapai (maksimal 12 hari)." },
+          { message: `Limit cuti tahunan habis. Sisa kuota: ${12 - totalHariCuti} hari.` },
           { status: 400 }
         );
       }
     }
     // --- END LIMIT CUTI TAHUNAN ---
 
+    // 5. PROSES UPLOAD FILE (BARU)
+    let attachmentUrl = null;
+    if (file && file.size > 0) {
+      const bytes = await file.arrayBuffer();
+      const buffer = new Uint8Array(bytes);
+      
+      // Simpan di folder public/uploads/izin
+      const uploadDir = path.join(process.cwd(), "public", "uploads", "izin");
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      // Nama file unik
+      const filename = `izin-${userId}-${Date.now()}-${file.name.replace(/\s/g, "_")}`;
+      const filepath = path.join(uploadDir, filename);
+      
+      fs.writeFileSync(filepath, buffer);
+      attachmentUrl = `/uploads/izin/${filename}`;
+    }
+
+    // 6. Simpan ke Database
     const pengajuan = await prisma.leaveRequest.create({
       data: {
         userId,
-        type,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
+        type: type as any, // Casting ke Enum Prisma
+        startDate: startDate,
+        endDate: endDate,
         reason,
+        attachment: attachmentUrl, // Masukkan URL file
         status: "pending",
       },
     });
 
-    return NextResponse.json(pengajuan);
+    return NextResponse.json(pengajuan, { status: 201 });
+
   } catch (error) {
-    console.error("Error saat membuat pengajuan cuti:", error);
-    return NextResponse.json({ message: "Terjadi kesalahan" }, { status: 500 });
+    console.error("Error saat membuat pengajuan:", error);
+    return NextResponse.json({ message: "Terjadi kesalahan server" }, { status: 500 });
   }
 }

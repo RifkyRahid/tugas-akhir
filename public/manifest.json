@@ -2,7 +2,7 @@
   "name": "Absensi App",
   "short_name": "Absensi",
   "description": "Aplikasi Absensi Karyawan",
-  "start_url": "/login",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",

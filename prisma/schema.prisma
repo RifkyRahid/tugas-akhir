@@ -1,11 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
-// prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-1.1.x"]
@@ -14,6 +9,13 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model AppConfig {
+  id            Int      @id @default(autoincrement())
+  startWorkTime String   @default("09:00")
+  endWorkTime   String   @default("17:00")
+  updatedAt     DateTime @updatedAt
 }
 
 model User {
@@ -25,21 +27,27 @@ model User {
   position      String?
   joinDate      DateTime
   isActive      Boolean        @default(true)
-  attendances   Attendance[]
-  leaveRequests LeaveRequest[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  // NEW
+  // Relasi Area Absensi
   areaId        Int?
   area          AttendanceArea? @relation(fields: [areaId], references: [id])
+
+  // Relasi ke Tabel Lain (Anak-anaknya)
+  attendances   Attendance[]
+  leaveRequests LeaveRequest[]
+  
+  // --- TAMBAHAN PENTING (FIX ERROR PRISMA) ---
+  // Relasi balik untuk Koreksi Absen agar Prisma tidak error
+  attendanceCorrections AttendanceCorrection[] 
 }
 
 
 model Attendance {
   id          String           @id @default(uuid())
-  user        User             @relation(fields: [userId], references: [id])
   userId      String
+  user        User             @relation(fields: [userId], references: [id])
   date        DateTime
   checkIn     DateTime?
   checkOut    DateTime?
@@ -50,16 +58,18 @@ model Attendance {
   longitude   Float?
   photo       String?
   createdAt   DateTime         @default(now())
+  
   areaId      Int?
   area        AttendanceArea?  @relation(fields: [areaId], references: [id])
+  
   @@unique([userId, date]) 
 }
 
 
 model LeaveRequest {
   id         String       @id @default(uuid())
-  user       User         @relation(fields: [userId], references: [id])
   userId     String
+  user       User         @relation(fields: [userId], references: [id])
   type       LeaveType
   startDate  DateTime
   endDate    DateTime
@@ -67,6 +77,19 @@ model LeaveRequest {
   status     LeaveStatus  @default(pending)
   attachment String?
   createdAt  DateTime     @default(now())
+}
+
+model AttendanceCorrection {
+  id           String       @id @default(uuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id]) 
+  date         DateTime     
+  jamMasuk     DateTime?    
+  jamPulang    DateTime     
+  reason       String
+  attachment   String?      
+  status       LeaveStatus  @default(pending)
+  createdAt    DateTime     @default(now())
 }
 
 model EventReminder {
@@ -88,7 +111,7 @@ model AttendanceArea {
   radius    Int
   isActive  Boolean  @default(true)
   attendances Attendance[]
-  users     User[]                  // NEW → relasi balik ke User
+  users     User[]
   createdAt DateTime @default(now())
 }
 
@@ -123,11 +146,4 @@ enum LeaveStatus {
   pending
   disetujui
   ditolak
-}
-
-model AppConfig {
-  id            Int      @id @default(autoincrement())
-  startWorkTime String   @default("09:00")
-  endWorkTime   String   @default("17:00")
-  updatedAt     DateTime @updatedAt
 }

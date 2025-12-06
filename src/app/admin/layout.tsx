@@ -13,7 +13,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     const user = getUserFromLocalStorage()
     if (!user || user.role !== 'admin') {
-      router.push('/login')
+      router.push('/')
     }
   }, [router])
 

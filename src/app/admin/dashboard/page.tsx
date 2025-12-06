@@ -48,20 +48,20 @@ export default function AdminDashboard() {
       try {
         const res = await fetch("/api/user/me", { credentials: "include" });
         if (!res.ok) {
-          router.push("/login");
+          router.push("/");
           return;
         }
 
         const data = await res.json();
         if (data.role !== "admin") {
-          router.push("/login");
+          router.push("/");
           return;
         }
 
         setUser({ name: data.name, role: data.role });
       } catch (error) {
         console.error("Gagal mengambil data user:", error);
-        router.push("/login");
+        router.push("/");
       }
     };
 
