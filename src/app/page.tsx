@@ -2,7 +2,7 @@
 import Swal from 'sweetalert2';
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import "../styles/login.css"; // Pastikan path css ini benar sesuai struktur folder kamu
+import "../styles/login.css"; 
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,33 +12,29 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 1. Tampilkan Loading Sebelum Fetch
     Swal.fire({
       title: 'Sedang Masuk...',
       text: 'Memverifikasi akun anda.',
-      allowOutsideClick: false, // User tidak bisa klik luar untuk tutup
+      allowOutsideClick: false,
       didOpen: () => {
-        Swal.showLoading(); // Tampilkan animasi loading bawaan SweetAlert
+        Swal.showLoading(); 
       }
     });
 
     try {
         const res = await fetch("/api/login", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
         });
 
         const data = await res.json();
 
         if (res.ok) {
-          // 2. Jika Sukses -> Loading otomatis terganti alert Sukses
           Swal.fire({
             icon: 'success',
             title: 'Login berhasil!',
-            text: data.role === 'admin' ? 'Selamat datang Admin!' : 'Selamat datang Karyawan!',
+            text: `Selamat datang kembali!`,
             timer: 1500,
             showConfirmButton: false,
           }).then(() => {
@@ -50,15 +46,14 @@ export default function LoginPage() {
               })
             );
             
-            // Redirect sesuai role
-            if (data.role === "admin") {
+            // Logika Redirect (Tetap dijaga agar Superadmin aman)
+            if (data.role === "admin" || data.role === "superadmin") {
               router.push("/admin/dashboard");
             } else {
               router.push("/karyawan/dashboard");
             }
           });
         } else {
-          // 3. Jika Gagal (Password salah) -> Loading terganti Error
           Swal.fire({
             icon: 'error',
             title: 'Login gagal',
@@ -67,12 +62,11 @@ export default function LoginPage() {
         }
 
     } catch (error) {
-        // 4. Jika Server Error / Tidak ada koneksi
         console.error("Login Error:", error);
         Swal.fire({
             icon: 'error',
             title: 'Gagal Terhubung',
-            text: 'Terjadi kesalahan pada server atau koneksi internet Anda.',
+            text: 'Terjadi kesalahan pada server.',
         });
     }
   };

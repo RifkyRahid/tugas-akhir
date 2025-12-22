@@ -8,12 +8,14 @@ import styles from "./layout/Sidebar.module.css";
 
 // --- Interface dan Tipe Data ---
 interface SidebarProps {
-  role: "admin" | "karyawan";
+  // Update: Tambahkan 'superadmin' ke sini
+  role: "admin" | "karyawan" | "superadmin"; 
 }
+
 type MenuItem = {
   label: string;
   href?: string;
-  isLogout?: boolean; // Tipe baru untuk tombol logout
+  isLogout?: boolean;
   subMenu?: { label: string; href: string }[];
 };
 
@@ -45,8 +47,9 @@ export default function Sidebar({ role }: SidebarProps) {
       ],
     },
     {
-      label: "Ekstra",
+      label: "Data Maseter",
       subMenu: [
+        { label: "Struktur Organisasi", href: "/admin/master/struktur" },
         { label: "Kalender", href: "/admin/kalender" },
         { label: "Pengaturan", href: "/admin/pengaturan" },
         { label: "Kelola Admin", href: "/admin/kelola-admin" },
@@ -60,16 +63,17 @@ export default function Sidebar({ role }: SidebarProps) {
     { label: "Absensi Saya", href: "/karyawan/absensi" },
     { label: "Ajukan Izin", href: "/karyawan/izin" },
     { label: "Profil Saya", href: "/karyawan/profil" },
-    { label: "Logout", isLogout: true }, // Tombol Logout dipindah ke sini
+    { label: "Logout", isLogout: true },
   ];
 
-  const menu = role === "admin" ? menuAdmin : menuKaryawan;
+  // --- UPDATE LOGIC DI SINI ---
+  // Jika role admin ATAU superadmin, pakai menuAdmin.
+  const menu = (role === "admin" || role === "superadmin") ? menuAdmin : menuKaryawan;
 
   const sidebarClasses = `${styles.sidebar} ${isOpen ? styles.open : ""}`;
 
   return (
     <>
-      {/* Header khusus untuk tampilan mobile */}
       <header className={styles.mobileHeader}>
         <button
           className={styles.hamburger}
@@ -81,7 +85,6 @@ export default function Sidebar({ role }: SidebarProps) {
         <div className={styles.mobileBrand}>HR-RAM</div>
       </header>
 
-      {/* Sidebar utama */}
       <aside className={sidebarClasses}>
         <div className={styles.sidebarContent}>
           <div className={styles.sidebarHeader}>
@@ -142,7 +145,6 @@ export default function Sidebar({ role }: SidebarProps) {
         </div>
       </aside>
 
-      {/* Overlay gelap saat sidebar mobile aktif */}
       {isOpen && (
         <div className={styles.overlay} onClick={() => setIsOpen(false)}></div>
       )}

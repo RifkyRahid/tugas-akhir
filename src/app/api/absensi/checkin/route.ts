@@ -13,11 +13,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Sesi habis, silakan login ulang." }, { status: 401 });
     }
 
+    // --- CEK 0: APAKAH SEDANG CUTI/IZIN? (FITUR BARU) ---
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset jam jadi 00:00
+
+    const sedangCuti = await prisma.leaveRequest.findFirst({
+        where: {
+            userId: userId,
+            status: 'disetujui', // Hanya yang sudah disetujui
+            startDate: { lte: today }, // Mulai sebelum atau pas hari ini
+            endDate: { gte: today }    // Berakhir setelah atau pas hari ini
+        }
+    });
+
+    if (sedangCuti) {
+        // Blokir Absen
+        return NextResponse.json({ 
+            message: `Anda tidak bisa absen karena sedang dalam status ${sedangCuti.type.toUpperCase()}.` 
+        }, { status: 403 });
+    }
+    // -----------------------------------------------------
+
     const form = await req.formData();
     const file = form.get("photo") as File | null;
     const latitude = parseFloat(form.get("latitude") as string);
     const longitude = parseFloat(form.get("longitude") as string);
-    // Kita hapus pengambilan 'keterangan' manual di sini karena user belum input
 
     if (!file) {
       return NextResponse.json({ message: "Foto wajib diambil!" }, { status: 400 });
@@ -34,11 +54,9 @@ export async function POST(req: NextRequest) {
     fs.writeFileSync(filepath, buffer);
     const photoUrl = `/uploads/${filename}`;
 
-    // --- CEK VALIDASI ---
+    // --- CEK VALIDASI ABSEN GANDA ---
     const now = new Date();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
+    
     const existing = await prisma.attendance.findFirst({
       where: { userId, date: { gte: today } },
     });
@@ -57,14 +75,10 @@ export async function POST(req: NextRequest) {
     let distance = 0;
     let areaName = "Lokasi Tidak Diketahui";
 
-    // --- CEK JAM KERJA DARI DB (UPDATE BARU) ---
-    // 1. Ambil settingan jam kerja dari AppConfig
+    // --- CEK JAM KERJA ---
     const config = await prisma.appConfig.findFirst();
-    
-    // Fallback jika admin belum pernah setting (Default jam 09:00)
     const jamMasukSetting = config?.startWorkTime || "09:00"; 
     
-    // 2. Konversi string "HH:mm" ke Object Date hari ini
     const [jam, menit] = jamMasukSetting.split(":").map(Number);
     const batasTepatWaktu = new Date();
     batasTepatWaktu.setHours(jam, menit, 0, 0);
@@ -72,18 +86,14 @@ export async function POST(req: NextRequest) {
     // --- LOGIKA UTAMA ---
     if (userWithArea?.area) {
       const { area } = userWithArea;
-      areaName = area.name; // Simpan nama area untuk respon
+      areaName = area.name; 
       
-      // 1. Hitung Jarak
       distance = haversineDistance(latitude, longitude, area.latitude, area.longitude);
       
-      // 2. Logika Strict Geofencing
       if (distance > area.radius) {
         status = "pending";
-        // Default system note, nanti di-update via PATCH oleh user jika pending
         finalKeterangan = `Diluar jangkauan (${Math.round(distance)}m)`;
       } else {
-        // Jika dalam area, cek apakah Terlambat berdasarkan jam dari DB
         if (now > batasTepatWaktu) {
             lateMinutes = Math.floor((now.getTime() - batasTepatWaktu.getTime()) / 60000);
             finalKeterangan = `Terlambat (Masuk: ${jamMasukSetting})`;
@@ -109,15 +119,13 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // --- RESPON PENTING ---
-    // Kita kirimkan areaName dan attendanceId agar frontend bisa minta alasan
     if (status === 'pending') {
         return NextResponse.json({
             status: 'pending',
             message: `Lokasi Anda tidak sesuai.`,
             areaName: areaName,
             distance: Math.round(distance),
-            attendanceId: absen.id // ID ini dipakai untuk PATCH alasan nanti
+            attendanceId: absen.id
         }, { status: 201 });
     }
 
@@ -132,7 +140,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// === METHOD PATCH: UNTUK UPDATE ALASAN (JIKA DILUAR LOKASI) ===
 export async function PATCH(req: NextRequest) {
   try {
     const userId = getUserIdFromSession(req);
@@ -145,7 +152,6 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ message: "Data tidak lengkap" }, { status: 400 });
     }
 
-    // Update keterangan absensi
     await prisma.attendance.update({
       where: { id: attendanceId },
       data: { keterangan: reason }

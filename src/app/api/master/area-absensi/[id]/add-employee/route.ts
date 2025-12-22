@@ -1,88 +1,68 @@
-import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { NextResponse, NextRequest } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
-
-// GET: Cari karyawan untuk ditambahkan
-// Filter: Hanya tampilkan yang BELUM punya area (areaId: null)
+// GET: Cari karyawan yang BELUM punya area (untuk dropdown tambah)
 export async function GET(
-  request: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q") || "";
+  try {
+    const { searchParams } = new URL(req.url);
+    const query = searchParams.get("q") || "";
 
-  // Cari user: Role karyawan, Aktif, Nama cocok, DAN areaId NULL (belum punya lokasi)
-  const users = await prisma.user.findMany({
-    where: {
-      role: "karyawan",
-      isActive: true,
-      areaId: null, // <--- INI FILTERNYA (Sesuai request awal: jangan dimunculkan jika sudah ada)
-      name: {
-        contains: query,
-        mode: "insensitive",
+    if (query.length < 2) return NextResponse.json({ data: [] });
+
+    const users = await prisma.user.findMany({
+      where: {
+        AND: [
+          { isActive: true },
+          { areaId: null }, // PENTING: Hanya cari yang belum punya area
+          {
+            OR: [
+              { name: { contains: query, mode: "insensitive" } },
+              { email: { contains: query, mode: "insensitive" } },
+            ],
+          },
+        ],
       },
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      position: true,
-    },
-    take: 5, 
-  });
+      take: 5,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        position: true,
+        jabatan: { // Include jabatan biar dropdown search juga rapi
+            select: { title: true }
+        }
+      },
+    });
 
-  return NextResponse.json({ data: users });
+    return NextResponse.json({ data: users });
+  } catch (error) {
+    return NextResponse.json({ error: "Search Error" }, { status: 500 });
+  }
 }
 
-// POST: Masukkan karyawan ke Area ini (STRICT MODE)
+// POST: Masukkan karyawan ke Area ini
 export async function POST(
-  request: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const areaId = parseInt(params.id);
-    const body = await request.json();
+    const body = await req.json();
     const { userId } = body;
 
-    if (!userId) {
-      return NextResponse.json({ error: "User ID wajib diisi" }, { status: 400 });
-    }
+    if (!userId) return NextResponse.json({ error: "User ID required" }, { status: 400 });
 
-    // 1. Cek dulu status user saat ini (Strict Check)
-    const existingUser = await prisma.user.findUnique({
+    // Update User
+    await prisma.user.update({
       where: { id: userId },
-      include: { area: true } // Include data area dia sekarang
+      data: { areaId: areaId },
     });
 
-    if (!existingUser) {
-      return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
-    }
-
-    // LOGIKA STRICT: Jika user sudah punya area, tolak request.
-    if (existingUser.areaId !== null && existingUser.areaId !== areaId) {
-      return NextResponse.json({ 
-        error: `Gagal! ${existingUser.name} sudah terdaftar di area "${existingUser.area?.name}". Hapus dulu dari sana jika ingin memindahkan.` 
-      }, { status: 409 }); // 409 Conflict
-    }
-
-    // Jika user sudah di area ini (double click prevention)
-    if (existingUser.areaId === areaId) {
-       return NextResponse.json({ message: "User sudah berada di area ini" });
-    }
-
-    // 2. Eksekusi Update jika lolos validasi
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        areaId: areaId
-      }
-    });
-
-    return NextResponse.json({ message: "Berhasil menambahkan karyawan", data: updatedUser });
-
+    return NextResponse.json({ message: "Sukses ditambahkan" });
   } catch (error) {
-    console.error("Error adding employee:", error);
-    return NextResponse.json({ error: "Gagal menambahkan karyawan" }, { status: 500 });
+    return NextResponse.json({ error: "Gagal menambahkan" }, { status: 500 });
   }
 }

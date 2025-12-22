@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import AdminLayout from "@/components/AdminLayout"; // Sesuaikan path layout
 import AddAdminModal from "@/components/AddAdminModal";
 import EditAdminModal from "@/components/EditAdminModal";
 import Swal from "sweetalert2";
-import "@/styles/dashboard.css"; // Reuse style dashboard
+import "@/styles/dashboard.css";
 
 export default function KelolaAdminPage() {
   const [admins, setAdmins] = useState<any[]>([]);
@@ -61,7 +60,7 @@ export default function KelolaAdminPage() {
   };
 
   return (
-    <AdminLayout>
+    <>
       <div className="page-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px'}}>
         <div>
             <h1 className="page-title" style={{margin:0}}>Kelola User Admin</h1>
@@ -136,6 +135,6 @@ export default function KelolaAdminPage() {
         onClose={() => setEditUser(null)} 
         onSuccess={fetchAdmins} 
       />
-    </AdminLayout>
+    </>
   );
 }

@@ -1,68 +1,72 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// === UPDATE USER (PUT) ===
-// Tidak ada perubahan logika, hanya perapihan tipe data
+// PUT: Update Data Karyawan (UPDATE FITUR CUTI)
 export async function PUT(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const { id } = params;
-  const body = await req.json();
-
   try {
+    const body = await req.json();
+    // Tangkap field baru
+    const { name, email, password, positionId, areaId, joinDate, birthDate, yearlyLeaveQuota, leaveUsedManual } = body;
+
+    const updateData: any = {
+      name,
+      email,
+      positionId: positionId ? Number(positionId) : null,
+      areaId: areaId ? Number(areaId) : null,
+      joinDate: new Date(joinDate),
+      
+      // --- UPDATE FIELD BARU ---
+      birthDate: birthDate ? new Date(birthDate) : null,
+      yearlyLeaveQuota: yearlyLeaveQuota ? Number(yearlyLeaveQuota) : 12,
+      leaveUsedManual: leaveUsedManual ? Number(leaveUsedManual) : 0,
+    };
+
+    if (password && password.length > 0) {
+      updateData.password = password; 
+    }
+
     const updatedUser = await prisma.user.update({
-      where: { id },
-      data: {
-        name: body.name,
-        email: body.email,
-        password: body.password,
-        position: body.position,
-        joinDate: body.joinDate ? new Date(body.joinDate) : undefined,
-        areaId: body.areaId ? Number(body.areaId) : null,
-      },
+      where: { id: params.id },
+      data: updateData,
     });
+
     return NextResponse.json(updatedUser);
   } catch (error) {
-    console.error("Gagal update user:", error);
-    return NextResponse.json({ error: "Gagal update user" }, { status: 500 });
+    console.error("Error update karyawan:", error);
+    return NextResponse.json(
+      { error: "Gagal mengupdate data karyawan" },
+      { status: 500 }
+    );
   }
 }
 
-// === HARD DELETE USER (DELETE) ===
-// Menghapus User beserta seluruh data Absensi dan Cuti miliknya
+// DELETE: Hapus Karyawan (Sama seperti kodemu sebelumnya)
 export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const { id } = params;
-
   try {
-    // Menggunakan Transaction agar semua terhapus atau tidak sama sekali (aman)
-    await prisma.$transaction(async (tx) => {
-      // 1. Hapus semua data Absensi milik user ini
-      await tx.attendance.deleteMany({
-        where: { userId: id },
-      });
+    const id = params.id;
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
+    }
 
-      // 2. Hapus semua data Pengajuan Cuti (LeaveRequest) milik user ini
-      // (Wajib dihapus juga karena ada relasi ke User)
-      await tx.leaveRequest.deleteMany({
-        where: { userId: id },
-      });
+    await prisma.$transaction([
+      prisma.attendance.deleteMany({ where: { userId: id } }),
+      prisma.leaveRequest.deleteMany({ where: { userId: id } }),
+      prisma.attendanceCorrection.deleteMany({ where: { userId: id } }),
+      prisma.user.delete({ where: { id } }),
+    ]);
 
-      // 3. Terakhir, baru hapus User-nya
-      await tx.user.delete({
-        where: { id },
-      });
-    });
-
-    return NextResponse.json({ message: "User dan data terkait berhasil dihapus permanen" });
+    return NextResponse.json({ message: "User berhasil dihapus total" });
   } catch (error) {
-    console.error("Gagal hapus user (Hard Delete):", error);
-    // Cek error spesifik Prisma jika perlu debug lebih lanjut
+    console.error("Error delete karyawan:", error);
     return NextResponse.json(
-      { error: "Gagal menghapus user. Pastikan tidak ada data lain yang mengunci." },
+      { error: "Gagal menghapus user" },
       { status: 500 }
     );
   }

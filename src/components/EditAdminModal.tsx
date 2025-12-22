@@ -13,14 +13,14 @@ export default function EditAdminModal({ isOpen, user, onClose, onSuccess }: Edi
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
 
-  // Reset form saat user berubah
   useEffect(() => {
     if (user) {
         setFormData({ 
             name: user.name, 
             email: user.email, 
-            password: "" // Password dikosongkan (mode edit/reset)
+            password: "" 
         });
+        setShowPassword(false);
     }
   }, [user]);
 
@@ -30,11 +30,7 @@ export default function EditAdminModal({ isOpen, user, onClose, onSuccess }: Edi
     try {
       Swal.fire({ title: 'Menyimpan...', didOpen: () => Swal.showLoading() });
       
-      // Filter payload: Jangan kirim password jika kosong
-      const payload: any = { 
-          name: formData.name, 
-          email: formData.email 
-      };
+      const payload: any = { name: formData.name, email: formData.email };
       if (formData.password.trim() !== "") {
           payload.password = formData.password;
       }
@@ -66,35 +62,29 @@ export default function EditAdminModal({ isOpen, user, onClose, onSuccess }: Edi
   return (
     <div className="modal-overlay">
       <div className="modal-card">
-        {/* Header */}
         <div className="modal-header">
             <h2 className="modal-title">Edit Data Admin</h2>
             <button className="close-btn" onClick={onClose}>&times;</button>
         </div>
 
         <div className="modal-body">
-            {/* Grid Form */}
             <div className="form-grid">
                 <div className="form-group full-width">
                     <label>Nama Lengkap</label>
                     <input 
                         value={formData.name} 
                         onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        placeholder="Nama Admin"
                     />
                 </div>
-
                 <div className="form-group full-width">
                     <label>Email Login</label>
                     <input 
                         value={formData.email} 
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
-                        placeholder="admin@perusahaan.com"
                     />
                 </div>
             </div>
 
-            {/* Password Section (Terpisah) */}
             <div className="password-section">
                 <label className="section-label">Reset Password</label>
                 <div className="form-group">
@@ -104,24 +94,25 @@ export default function EditAdminModal({ isOpen, user, onClose, onSuccess }: Edi
                             type={showPassword ? "text" : "password"}
                             value={formData.password} 
                             onChange={(e) => setFormData({...formData, password: e.target.value})}
-                            placeholder="Isi HANYA jika ingin mengganti password"
+                            placeholder="Ketik password baru disini..."
+                            autoComplete="new-password"
                         />
-                        <div className="checkbox-wrapper">
-                            <input
-                                id="showPassEdit"
-                                type="checkbox"
-                                checked={showPassword}
-                                onChange={() => setShowPassword(!showPassword)}
-                            />
-                            <label htmlFor="showPassEdit">Lihat</label>
-                        </div>
+                         <button 
+                            type="button"
+                            className="toggle-password"
+                            onClick={() => setShowPassword(!showPassword)}
+                            title={showPassword ? "Sembunyikan" : "Lihat"}
+                        >
+                            {showPassword ? "🙈" : "👁️"}
+                        </button>
                     </div>
-                    <small style={{color:'#666', marginTop:'5px'}}>*Kosongkan jika tidak ingin mengubah password saat ini.</small>
+                    <small style={{color:'#d97706', fontSize:'12px', marginTop:'5px'}}>
+                        *Isi kolom ini HANYA jika ingin mengubah password admin ini. Password lama tidak dapat ditampilkan karena terenkripsi.
+                    </small>
                 </div>
             </div>
         </div>
 
-        {/* Footer */}
         <div className="modal-footer">
             <button className="btn-cancel" onClick={onClose}>Batal</button>
             <button className="btn-submit" onClick={handleSubmit}>Simpan Perubahan</button>
@@ -129,173 +120,36 @@ export default function EditAdminModal({ isOpen, user, onClose, onSuccess }: Edi
       </div>
 
       <style jsx>{`
-        .modal-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.5);
-          backdrop-filter: blur(3px);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 1000;
-          padding: 20px;
-        }
-
-        .modal-card {
-          background: white;
-          border-radius: 12px;
-          width: 750px; /* Lebar Ideal */
-          max-width: 100%;
-          display: flex;
-          flex-direction: column;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-          overflow: hidden;
-        }
-
-        /* HEADER */
-        .modal-header {
-            padding: 15px 25px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #f8f9fa;
-        }
-
-        .modal-title {
-          color: #1e293b;
-          font-size: 1.25rem;
-          font-weight: 700;
-          margin: 0;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 1.8rem;
-            line-height: 1;
-            cursor: pointer;
-            color: #94a3b8;
-            transition: color 0.2s;
-        }
+        /* ... CSS SAMA DENGAN EditUserModal di atas ... */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .modal-card { background: white; border-radius: 12px; width: 750px; max-width: 100%; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.25); overflow: hidden; }
+        .modal-header { padding: 15px 25px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; }
+        .modal-title { color: #1e293b; font-size: 1.25rem; font-weight: 700; margin: 0; }
+        .close-btn { background: none; border: none; font-size: 1.8rem; line-height: 1; cursor: pointer; color: #94a3b8; transition: color 0.2s; }
         .close-btn:hover { color: #ef4444; }
-
-        /* BODY */
         .modal-body { padding: 25px; overflow-y: auto; }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            column-gap: 30px;
-            row-gap: 20px;
-        }
-
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px; row-gap: 20px; }
         .full-width { grid-column: span 2; }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        label {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #475569;
-        }
-
-        input {
-            padding: 10px 12px;
-            border-radius: 6px;
-            border: 1px solid #cbd5e1;
-            font-size: 0.95rem;
-            width: 100%;
-            transition: all 0.2s;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        /* Password Section Style */
-        .password-section {
-            margin-top: 25px;
-            background: #fffbeb; /* Kuning muda */
-            border: 1px solid #fcd34d;
-            padding: 20px;
-            border-radius: 8px;
-        }
-
-        .section-label {
-            display: block;
-            margin-bottom: 12px;
-            color: #b45309;
-            font-size: 0.8rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .input-group {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .form-group { display: flex; flex-direction: column; gap: 8px; }
+        label { font-size: 0.9rem; font-weight: 600; color: #475569; }
+        input { padding: 10px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 0.95rem; width: 100%; }
         
-        .input-group input { flex: 1; }
-
-        .checkbox-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            white-space: nowrap;
+        .password-section { margin-top: 25px; background: #fffbeb; border: 1px solid #fcd34d; padding: 20px; border-radius: 8px; }
+        .section-label { display: block; margin-bottom: 12px; color: #b45309; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+        .input-group { display: flex; gap: 0; align-items: stretch; position: relative; }
+        .input-group input { border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none; }
+        .toggle-password {
+            background: #fff; border: 1px solid #cbd5e1; border-left: none;
+            border-top-right-radius: 6px; border-bottom-right-radius: 6px;
+            padding: 0 15px; cursor: pointer; font-size: 1.2rem;
+            display: flex; align-items: center; justify-content: center;
         }
+        .toggle-password:hover { background: #f8fafc; }
 
-        /* FOOTER */
-        .modal-footer {
-            padding: 15px 25px;
-            border-top: 1px solid #eee;
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            background: #fff;
-        }
-
-        .btn-submit {
-          background: #0f172a;
-          color: white;
-          padding: 10px 24px;
-          border-radius: 6px;
-          border: none;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-        
-        .btn-submit:hover { background: #1e293b; }
-
-        .btn-cancel {
-          background: white;
-          color: #64748b;
-          border: 1px solid #cbd5e1;
-          padding: 10px 24px;
-          border-radius: 6px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background 0.2s;
-        }
-
-        .btn-cancel:hover { background: #f1f5f9; color: #334155; }
-
-        @media (max-width: 640px) {
-            .form-grid { grid-template-columns: 1fr; }
-            .full-width { grid-column: span 1; }
-            .modal-card { width: 95%; }
-        }
+        .modal-footer { padding: 15px 25px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 12px; background: #fff; }
+        .btn-submit { background: #0f172a; color: white; padding: 10px 24px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; }
+        .btn-cancel { background: white; color: #64748b; border: 1px solid #cbd5e1; padding: 10px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } .full-width { grid-column: span 1; } }
       `}</style>
     </div>
   );

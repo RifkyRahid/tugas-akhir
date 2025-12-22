@@ -1,0 +1,172 @@
+/* Container Utama */
+.struktur-container {
+  padding: 0;
+  width: 100%;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1e3a8a; /* Blue 900 */
+  margin: 0;
+}
+
+/* Tombol Utama */
+.btn-add-dept {
+  background-color: #2563eb; /* Blue 600 */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+}
+
+.btn-add-dept:hover {
+  background-color: #1d4ed8;
+}
+
+/* Grid Layout untuk Kartu Departemen */
+.dept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 24px;
+}
+
+/* Kartu Departemen */
+.dept-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-top: 5px solid #f59e0b; /* Aksen Kuning */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.2s;
+}
+
+.dept-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Header Kartu (Nama Departemen) */
+.dept-header {
+  padding: 16px 20px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dept-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #334155;
+  margin: 0;
+}
+
+.dept-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Body Kartu (Daftar Jabatan) */
+.dept-body {
+  padding: 0;
+  flex-grow: 1;
+  max-height: 300px; /* Scroll jika jabatan banyak */
+  overflow-y: auto;
+}
+
+.pos-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pos-item {
+  padding: 12px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.1s;
+}
+
+.pos-item:hover {
+  background-color: #f8fafc;
+}
+
+.pos-item:last-child {
+  border-bottom: none;
+}
+
+.pos-title {
+  font-size: 14px;
+  color: #475569;
+  font-weight: 500;
+}
+
+/* Footer Kartu (Tombol Tambah Jabatan) */
+.dept-footer {
+  padding: 12px 20px;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.btn-add-pos {
+  background: none;
+  border: 1px dashed #94a3b8;
+  color: #64748b;
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-add-pos:hover {
+  background-color: #eff6ff;
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+
+/* Tombol Kecil (Edit/Hapus) */
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  transition: color 0.2s;
+}
+
+.icon-btn:hover {
+  background-color: #e2e8f0;
+  color: #334155;
+}
+
+.icon-btn.delete:hover {
+  background-color: #fee2e2;
+  color: #ef4444;
+}

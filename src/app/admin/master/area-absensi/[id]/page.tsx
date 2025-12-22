@@ -3,13 +3,11 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Swal from "sweetalert2";
-// Pastikan path css ini benar, atau copy style table dari halaman sebelumnya
 import "@/styles/areaabsensi.css";
 
 export default function DetailAreaPage() {
   const router = useRouter();
   const params = useParams();
-  // Handling jika params.id berupa array (edge case nextjs) atau string
   const areaId = Array.isArray(params.id) ? params.id[0] : params.id;
 
   const [areaName, setAreaName] = useState("");
@@ -27,7 +25,7 @@ export default function DetailAreaPage() {
     }
   }, [areaId]);
 
-  // 1. Ambil data karyawan yang sudah ada di area ini
+  // 1. Ambil data karyawan
   async function fetchEmployeesInArea() {
     setLoading(true);
     try {
@@ -41,13 +39,12 @@ export default function DetailAreaPage() {
       }
     } catch (err) {
       console.error(err);
-      Swal.fire("Error", "Gagal terhubung ke server", "error");
     } finally {
       setLoading(false);
     }
   }
 
-  // 2. Fungsi cari karyawan (dipanggil saat mengetik)
+  // 2. Fungsi cari karyawan
   async function handleSearch(query: string) {
     setSearchQuery(query);
     if (query.length < 2) {
@@ -71,14 +68,10 @@ export default function DetailAreaPage() {
     }
   }
 
-  // 3. Fungsi Menambahkan Karyawan ke Area
+  // 3. Fungsi Menambahkan
   async function handleAddEmployee(user: any) {
     try {
-      // Tampilkan loading
-      Swal.fire({
-        title: "Menambahkan...",
-        didOpen: () => Swal.showLoading(),
-      });
+      Swal.fire({ title: "Menambahkan...", didOpen: () => Swal.showLoading() });
 
       const res = await fetch(
         `/api/master/area-absensi/${areaId}/add-employee`,
@@ -89,67 +82,48 @@ export default function DetailAreaPage() {
         }
       );
 
-      const result = await res.json();
-
       if (res.ok) {
         Swal.fire({
-          icon: "success",
-          title: "Berhasil",
-          text: "Karyawan berhasil ditambahkan",
-          timer: 1500,
-          showConfirmButton: false,
+          icon: "success", title: "Berhasil", text: "Karyawan ditambahkan",
+          timer: 1000, showConfirmButton: false,
         });
-        setSearchQuery(""); // Reset input
-        setSearchResults([]); // Tutup dropdown
-        fetchEmployeesInArea(); // Refresh tabel list
+        setSearchQuery("");
+        setSearchResults([]);
+        fetchEmployeesInArea();
       } else {
-        // Tampilkan pesan error dari backend (Logika Strict)
-        Swal.fire({
-          icon: "error",
-          title: "Gagal Menambahkan",
-          text: result.error || "Terjadi kesalahan",
-        });
+        Swal.fire("Gagal", "Terjadi kesalahan", "error");
       }
     } catch (err) {
-      Swal.fire("Gagal", "Terjadi kesalahan koneksi", "error");
+      Swal.fire("Gagal", "Koneksi error", "error");
     }
   }
 
-  // 4. Fungsi Menghapus Karyawan dari Area
+  // 4. Fungsi Menghapus
   async function handleRemoveEmployee(userId: string, userName: string) {
     Swal.fire({
       title: "Keluarkan Karyawan?",
-      text: `Anda akan mengeluarkan "${userName}" dari area ini.`,
+      text: `Keluarkan "${userName}" dari area ini?`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Ya, Keluarkan!",
-      cancelButtonText: "Batal",
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          Swal.fire({ didOpen: () => Swal.showLoading() });
-
           const res = await fetch(
             `/api/master/area-absensi/${areaId}/employees?userId=${userId}`,
-            {
-              method: "DELETE",
-            }
+            { method: "DELETE" }
           );
 
           if (res.ok) {
-            Swal.fire(
-              "Berhasil!",
-              "Karyawan dikeluarkan dari area.",
-              "success"
-            );
+            Swal.fire("Berhasil!", "Karyawan dikeluarkan.", "success");
             fetchEmployeesInArea();
           } else {
             Swal.fire("Gagal", "Gagal menghapus data.", "error");
           }
         } catch (err) {
-          Swal.fire("Error", "Terjadi kesalahan koneksi.", "error");
+          Swal.fire("Error", "Koneksi error.", "error");
         }
       }
     });
@@ -157,25 +131,12 @@ export default function DetailAreaPage() {
 
   return (
     <div className="area-absensi-container" style={{ padding: "20px" }}>
-      {/* Header & Back Button */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          marginBottom: "25px",
-          gap: "15px",
-        }}
-      >
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", marginBottom: "25px", gap: "15px" }}>
         <button
           onClick={() => router.push("/admin/master/area-absensi")}
-          className="secondary-button" // Pastikan class ini ada di css atau ganti style manual
-          style={{
-            cursor: "pointer",
-            padding: "8px 15px",
-            border: "1px solid #ccc",
-            background: "#fff",
-            borderRadius: "5px",
-          }}
+          className="secondary-button"
+          style={{ cursor: "pointer", padding: "8px 15px", border: "1px solid #ccc", background: "#fff", borderRadius: "5px" }}
         >
           ← Kembali
         </button>
@@ -187,20 +148,9 @@ export default function DetailAreaPage() {
         </div>
       </div>
 
-      {/* Bagian Search / Tambah Karyawan */}
-      <div
-        style={{
-          position: "relative",
-          marginBottom: "30px",
-          maxWidth: "600px",
-          background: "#f8f9fa",
-          padding: "20px",
-          borderRadius: "8px",
-        }}
-      >
-        <label
-          style={{ display: "block", marginBottom: "10px", fontWeight: "bold" }}
-        >
+      {/* Pencarian */}
+      <div style={{ position: "relative", marginBottom: "30px", maxWidth: "600px", background: "#f8f9fa", padding: "20px", borderRadius: "8px" }}>
+        <label style={{ display: "block", marginBottom: "10px", fontWeight: "bold" }}>
           Tambahkan Karyawan Baru
         </label>
         <p style={{ fontSize: "12px", color: "#666", marginBottom: "10px" }}>
@@ -209,102 +159,48 @@ export default function DetailAreaPage() {
 
         <input
           type="text"
-          placeholder="Ketik nama karyawan untuk mencari..."
+          placeholder="Ketik nama karyawan..."
           className="form-input"
-          style={{
-            width: "100%",
-            padding: "12px",
-            borderRadius: "5px",
-            border: "1px solid #ddd",
-          }}
+          style={{ width: "100%", padding: "12px", borderRadius: "5px", border: "1px solid #ddd" }}
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
         />
 
         {/* Dropdown Hasil Pencarian */}
         {searchResults.length > 0 && (
-          <div
-            style={{
-              position: "absolute",
-              top: "calc(100% - 20px)", // adjust overlap
-              left: "20px",
-              right: "20px",
-              backgroundColor: "white",
-              border: "1px solid #ddd",
-              borderRadius: "0 0 5px 5px",
-              boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-              zIndex: 100,
-              maxHeight: "300px",
-              overflowY: "auto",
+          <div style={{
+              position: "absolute", top: "calc(100% - 20px)", left: "20px", right: "20px",
+              backgroundColor: "white", border: "1px solid #ddd", borderRadius: "0 0 5px 5px",
+              boxShadow: "0 4px 10px rgba(0,0,0,0.1)", zIndex: 100, maxHeight: "300px", overflowY: "auto",
             }}
           >
             {searchResults.map((user) => (
               <div
                 key={user.id}
-                style={{
-                  padding: "12px 15px",
-                  borderBottom: "1px solid #eee",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  cursor: "pointer",
-                  transition: "background 0.2s",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "#f0f7ff")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "white")
-                }
+                style={{ padding: "12px 15px", borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
                 onClick={() => handleAddEmployee(user)}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f7ff")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "white")}
               >
                 <div>
-                  <div style={{ fontWeight: "600", color: "#333" }}>
-                    {user.name}
-                  </div>
+                  <div style={{ fontWeight: "600", color: "#333" }}>{user.name}</div>
+                  {/* UPDATE TAMPILAN JABATAN DI SEARCH */}
                   <div style={{ fontSize: "12px", color: "#888" }}>
-                    {user.position || "Staff"} - {user.email}
+                    {user.jabatan?.title || user.position || "Staff"} - {user.email}
                   </div>
                 </div>
-                <button
-                  style={{
-                    padding: "6px 12px",
-                    background: "#2ecc71",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    fontSize: "12px",
-                    cursor: "pointer",
-                  }}
-                >
+                <button style={{ padding: "6px 12px", background: "#2ecc71", color: "white", border: "none", borderRadius: "4px", fontSize: "12px", cursor: "pointer" }}>
                   + Tambah
                 </button>
               </div>
             ))}
           </div>
         )}
-
-        {searchQuery.length >= 2 &&
-          searchResults.length === 0 &&
-          !isSearching && (
-            <div
-              style={{
-                padding: "10px",
-                fontSize: "13px",
-                color: "#666",
-                fontStyle: "italic",
-              }}
-            >
-              Tidak ada karyawan yang cocok (atau semua sudah punya area).
-            </div>
-          )}
       </div>
 
-      {/* Tabel Daftar Karyawan */}
+      {/* Tabel */}
       <div className="table-section">
-        <h3 style={{ marginBottom: "15px" }}>
-          Daftar Karyawan Terdaftar ({employees.length})
-        </h3>
+        <h3 style={{ marginBottom: "15px" }}>Daftar Karyawan Terdaftar ({employees.length})</h3>
         <table className="area-table">
           <thead>
             <tr>
@@ -316,59 +212,37 @@ export default function DetailAreaPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td
-                  colSpan={4}
-                  style={{ textAlign: "center", padding: "20px" }}
-                >
-                  Sedang memuat data...
-                </td>
-              </tr>
+              <tr><td colSpan={4} style={{ textAlign: "center", padding: "20px" }}>Sedang memuat data...</td></tr>
             ) : employees.length > 0 ? (
               employees.map((emp) => (
                 <tr key={emp.id}>
                   <td>{emp.name}</td>
-                  <td>{emp.position || "-"}</td>
+                  
+                  {/* --- PERBAIKAN UTAMA DISINI --- */}
+                  {/* Prioritaskan jabatan dari relasi, fallback ke data lama */}
+                  <td>
+                    {emp.jabatan?.title ? (
+                        <span style={{fontWeight:'500', color:'#0f172a'}}>{emp.jabatan.title}</span>
+                    ) : (
+                        <span style={{color:'#64748b', fontStyle:'italic'}}>{emp.position || "-"}</span>
+                    )}
+                  </td>
+                  
                   <td>{emp.email}</td>
                   <td style={{ textAlign: "center" }}>
                     <button
                       className="action-btn delete"
                       title="Keluarkan dari area"
                       onClick={() => handleRemoveEmployee(emp.id, emp.name)}
-                      style={{
-                        background: "#ffebee",
-                        border: "1px solid #ffcdd2",
-                        borderRadius: "4px",
-                        padding: "5px",
-                      }}
+                      style={{ background: "#ffebee", border: "1px solid #ffcdd2", borderRadius: "4px", padding: "5px" }}
                     >
-                      <img
-                        src="/icons/remove.png"
-                        alt="Hapus"
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          display: "block",
-                        }}
-                      />
+                      <img src="/icons/remove.png" alt="Hapus" style={{ width: "18px", height: "18px", display: "block" }} />
                     </button>
                   </td>
                 </tr>
               ))
             ) : (
-              <tr>
-                <td
-                  colSpan={4}
-                  style={{
-                    textAlign: "center",
-                    padding: "30px",
-                    color: "#888",
-                  }}
-                >
-                  Belum ada karyawan di area ini. <br />
-                  Gunakan kolom pencarian di atas untuk menambahkan.
-                </td>
-              </tr>
+              <tr><td colSpan={4} style={{ textAlign: "center", padding: "30px", color: "#888" }}>Belum ada karyawan di area ini.</td></tr>
             )}
           </tbody>
         </table>

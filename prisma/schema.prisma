@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-1.1.x"]
@@ -18,31 +15,47 @@ model AppConfig {
   updatedAt     DateTime @updatedAt
 }
 
-model User {
-  id            String         @id @default(uuid())
-  name          String
-  email         String         @unique
-  password      String
-  role          Role
-  position      String?
-  joinDate      DateTime
-  isActive      Boolean        @default(true)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
 
-  // Relasi Area Absensi
-  areaId        Int?
-  area          AttendanceArea? @relation(fields: [areaId], references: [id])
-
-  // Relasi ke Tabel Lain (Anak-anaknya)
-  attendances   Attendance[]
-  leaveRequests LeaveRequest[]
-  
-  // --- TAMBAHAN PENTING (FIX ERROR PRISMA) ---
-  // Relasi balik untuk Koreksi Absen agar Prisma tidak error
-  attendanceCorrections AttendanceCorrection[] 
+model Department {
+  id        Int        @id @default(autoincrement())
+  name      String     
+  positions Position[] 
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
+model Position {
+  id           Int        @id @default(autoincrement())
+  title        String     
+  departmentId Int
+  department   Department @relation(fields: [departmentId], references: [id])
+  users        User[]     
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password      String
+  role          Role
+  positionId    Int?      
+  jabatan       Position? @relation(fields: [positionId], references: [id])
+  position      String?   
+  joinDate      DateTime
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  areaId        Int?
+  birthDate        DateTime?
+  yearlyLeaveQuota Int        @default(12) 
+  leaveUsedManual  Int        @default(0)
+  area          AttendanceArea? @relation(fields: [areaId], references: [id])
+  attendances           Attendance[]
+  leaveRequests         LeaveRequest[]
+  attendanceCorrections AttendanceCorrection[] 
+}
 
 model Attendance {
   id          String           @id @default(uuid())
@@ -61,10 +74,15 @@ model Attendance {
   
   areaId      Int?
   area        AttendanceArea?  @relation(fields: [areaId], references: [id])
+
+  isViolation     Boolean  @default(false) 
+  isPendingDeleted Boolean @default(false) 
+  
+  reviewedBy      String?  
+  reviewedAt      DateTime? 
   
   @@unique([userId, date]) 
 }
-
 
 model LeaveRequest {
   id         String       @id @default(uuid())
@@ -84,10 +102,10 @@ model AttendanceCorrection {
   userId       String
   user         User         @relation(fields: [userId], references: [id]) 
   date         DateTime     
-  jamMasuk     DateTime?    
+  jamMasuk     DateTime?
   jamPulang    DateTime     
   reason       String
-  attachment   String?      
+  attachment   String?
   status       LeaveStatus  @default(pending)
   createdAt    DateTime     @default(now())
 }
@@ -125,6 +143,7 @@ enum EventType {
 enum Role {
   admin
   karyawan
+  superadmin
 }
 
 enum AttendanceStatus {

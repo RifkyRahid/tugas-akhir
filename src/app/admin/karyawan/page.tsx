@@ -10,13 +10,26 @@ import EditUserModal from "@/components/EditUserModal";
 
 import "@/styles/dashboard.css";
 
+// Definisi Tipe User yang diperbarui
 type User = {
   id: string;
   name: string;
   email: string;
   password: string;
   role: string;
+  
+  // Field Legacy (String lama)
   position?: string;
+  
+  // Field Baru (Relasi)
+  positionId?: number;
+  jabatan?: {
+    title: string;
+    department?: {
+      name: string;
+    };
+  };
+
   joinDate: string;
   isActive: boolean;
   createdAt: string;
@@ -66,7 +79,7 @@ export default function KelolaKaryawanPage() {
     }
   };
 
-  // --- 2. LOGIKA FILTER, SORTING, PAGINATION (CLIENT SIDE) ---
+  // --- 2. LOGIKA FILTER, SORTING, PAGINATION ---
   
   // Ambil list unik area untuk dropdown filter
   const uniqueAreas = useMemo(() => {
@@ -78,13 +91,18 @@ export default function KelolaKaryawanPage() {
   const processedUsers = useMemo(() => {
     let filtered = [...users];
 
-    // Filter Search
+    // Filter Search (Nama, Email, ATAU Jabatan Baru/Lama)
     if (searchTerm) {
       const lower = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (u) =>
           u.name.toLowerCase().includes(lower) ||
           u.email.toLowerCase().includes(lower) ||
+          // Cek Jabatan Baru
+          (u.jabatan?.title && u.jabatan.title.toLowerCase().includes(lower)) ||
+          // Cek Unit Bisnis Baru
+          (u.jabatan?.department?.name && u.jabatan.department.name.toLowerCase().includes(lower)) ||
+          // Cek Jabatan Lama (Fallback)
           (u.position && u.position.toLowerCase().includes(lower))
       );
     }
@@ -97,11 +115,11 @@ export default function KelolaKaryawanPage() {
     // Sorting
     filtered.sort((a, b) => {
       if (sortOption === "newest") {
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(); // Paling baru ditambahkan
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       } else if (sortOption === "a-z") {
-        return a.name.localeCompare(b.name); // Abjad
+        return a.name.localeCompare(b.name);
       } else {
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(); // Default: Paling lama (First added)
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       }
     });
 
@@ -132,7 +150,7 @@ export default function KelolaKaryawanPage() {
     setShowEditModal(true);
   };
 
-  const handleEditSubmit = async (updatedUser: User) => {
+  const handleEditSubmit = async (updatedUser: any) => { // Type updatedUser disesuaikan dengan form modal
     try {
       Swal.fire({ title: 'Menyimpan...', didOpen: () => Swal.showLoading() });
       
@@ -143,9 +161,8 @@ export default function KelolaKaryawanPage() {
       });
 
       if (res.ok) {
-        setUsers((prev) =>
-          prev.map((user) => (user.id === updatedUser.id ? updatedUser : user))
-        );
+        // Refresh data dari server agar relasi jabatan terupdate dengan benar
+        await fetchData(); 
         setShowEditModal(false);
         setSelectedUser(null);
         Swal.fire("Berhasil", "Data karyawan diperbarui", "success");
@@ -160,7 +177,7 @@ export default function KelolaKaryawanPage() {
   const handleDelete = async (user: User) => {
     const result = await Swal.fire({
       title: `Hapus ${user.name}?`,
-      text: "PERINGATAN: Ini adalah Hard Delete. Semua data absensi, riwayat cuti, dan akun login karyawan ini akan dihapus permanen dan TIDAK BISA DIKEMBALIKAN.",
+      text: "PERINGATAN: Ini adalah Hard Delete. Semua data absensi dan akun akan dihapus permanen.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
@@ -229,7 +246,7 @@ export default function KelolaKaryawanPage() {
             <div style={{ flex: '1 1 200px' }}>
                 <input 
                     type="text" 
-                    placeholder="Cari nama atau email..." 
+                    placeholder="Cari nama, email, atau jabatan..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     style={{ width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
@@ -286,7 +303,7 @@ export default function KelolaKaryawanPage() {
                 <th>No</th>
                 <th>Nama Lengkap</th>
                 <th>Email</th>
-                <th>Posisi</th>
+                <th>Posisi & Unit</th>
                 <th>Tgl Gabung</th>
                 <th>Area Absensi</th>
                 <th>Aksi</th>
@@ -301,10 +318,28 @@ export default function KelolaKaryawanPage() {
                         <td>{itemsPerPage === "all" ? index + 1 : (currentPage - 1) * (itemsPerPage as number) + index + 1}</td>
                         <td>
                             <div style={{fontWeight: 'bold'}}>{user.name}</div>
-                            <div style={{fontSize: '11px', color: '#666'}}>ID: {user.id.substring(0,8)}...</div>
+                            {/* <div style={{fontSize: '11px', color: '#666'}}>ID: {user.id.substring(0,8)}...</div> */}
                         </td>
                         <td>{user.email}</td>
-                        <td>{user.position || "-"}</td>
+                        
+                        {/* UPDATE KOLOM POSISI */}
+                        <td>
+                            {user.jabatan ? (
+                                <div>
+                                    <div style={{fontWeight: '600', color: '#333'}}>{user.jabatan.title}</div>
+                                    {user.jabatan.department && (
+                                        <div style={{fontSize: '11px', color: '#1976d2', fontWeight: 'bold', marginTop:'2px'}}>
+                                           🏢 {user.jabatan.department.name}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <span style={{color: '#999', fontStyle: 'italic', fontSize:'13px'}}>
+                                    {user.position || "-"}
+                                </span>
+                            )}
+                        </td>
+
                         <td>{new Date(user.joinDate).toLocaleDateString('id-ID')}</td>
                         <td>
                             {user.area?.name ? (
@@ -393,8 +428,9 @@ export default function KelolaKaryawanPage() {
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
           onUserAdded={(newUser: User) => {
-            setUsers((prev) => [...prev, newUser]);
-            fetchData(); // Refresh biar urutan benar
+            // Fetch ulang agar relasi jabatan/departemen termuat lengkap
+            fetchData(); 
+            // setUsers((prev) => [...prev, newUser]); // Opsi cepat (tapi data relasi mungkin belum lengkap)
           }}
         />
       )}

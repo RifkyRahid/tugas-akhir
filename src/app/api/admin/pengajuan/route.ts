@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma"; // Pastikan import prisma pakai kurung kurawal {} jika di lib/prisma export const
+import { Prisma } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const jenis = searchParams.get("jenis");   // izin / sakit / cuti
-  const status = searchParams.get("status"); // pending / disetujui / ditolak
+  const jenis = searchParams.get("jenis");
+  const status = searchParams.get("status");
 
-  const whereClause: any = {};
+  // Gunakan Tipe dari Prisma supaya auto-complete jalan
+  const whereClause: Prisma.LeaveRequestWhereInput = {};
 
   if (jenis) {
-    whereClause.type = jenis;
+    // Casting agar Prisma tau ini enum yang valid
+    whereClause.type = jenis as any; 
   }
 
   if (status) {
-    whereClause.status = status;
+    whereClause.status = status as any;
   }
 
   try {
@@ -21,7 +24,7 @@ export async function GET(req: NextRequest) {
       where: whereClause,
       include: {
         user: {
-          select: { name: true , role: true},
+          select: { name: true, role: true },
         },
       },
       orderBy: {

@@ -1,79 +1,72 @@
-import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { NextResponse, NextRequest } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
-
-// GET: Ambil daftar karyawan yang SUDAH ada di area ini
+// GET: Ambil daftar karyawan di Area tertentu
 export async function GET(
-  request: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const areaId = parseInt(params.id);
 
-    // Cek apakah area ada
-    const areaCheck = await prisma.attendanceArea.findUnique({
+    // 1. Cek Area
+    const area = await prisma.attendanceArea.findUnique({
       where: { id: areaId },
-      select: { name: true }
     });
 
-    if (!areaCheck) {
+    if (!area) {
       return NextResponse.json({ error: "Area tidak ditemukan" }, { status: 404 });
     }
 
+    // 2. Ambil User dengan areaId ini + Include JABATAN
     const employees = await prisma.user.findMany({
       where: {
         areaId: areaId,
         isActive: true, // Hanya ambil yang aktif
-        role: "karyawan"
       },
       select: {
         id: true,
         name: true,
-        position: true,
         email: true,
-        // Kita tidak perlu ambil area lagi karena sudah pasti di area ini
+        position: true, // Data lama (backup)
+        jabatan: {      // DATA BARU: Relasi Jabatan
+            select: { title: true }
+        }
       },
-      orderBy: {
-        name: 'asc'
-      }
+      orderBy: { name: "asc" },
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
+      areaName: area.name,
       data: employees,
-      areaName: areaCheck.name
     });
-
   } catch (error) {
-    console.error("Error fetching employees:", error);
-    return NextResponse.json({ error: "Terjadi kesalahan server" }, { status: 500 });
+    console.error("Error fetch employees in area:", error);
+    return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }
 }
 
-// DELETE: Keluarkan karyawan dari area ini (Set areaId jadi null)
+// DELETE: Keluarkan Karyawan dari Area
 export async function DELETE(
-  request: Request,
+  req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = new URL(req.url);
     const userId = searchParams.get("userId");
 
     if (!userId) {
-      return NextResponse.json({ error: "User ID diperlukan" }, { status: 400 });
+      return NextResponse.json({ error: "User ID wajib ada" }, { status: 400 });
     }
 
-    // Update user: Hapus areaId (set null)
+    // Set areaId user menjadi NULL
     await prisma.user.update({
       where: { id: userId },
-      data: {
-        areaId: null
-      }
+      data: { areaId: null },
     });
 
-    return NextResponse.json({ message: "Karyawan berhasil dikeluarkan dari area" });
+    return NextResponse.json({ message: "Berhasil dikeluarkan" });
   } catch (error) {
-    console.error("Error removing employee:", error);
-    return NextResponse.json({ error: "Gagal menghapus karyawan" }, { status: 500 });
+    return NextResponse.json({ error: "Gagal menghapus" }, { status: 500 });
   }
 }

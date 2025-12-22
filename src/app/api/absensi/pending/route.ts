@@ -1,80 +1,74 @@
 import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const dateParam = searchParams.get("date"); // Format: YYYY-MM-DD
-  const monthParam = searchParams.get("month"); // Format: M (1-12)
-  const yearParam = searchParams.get("year");   // Format: YYYY
+  const dateParam = searchParams.get("date"); 
 
-  // === MODE 1: REQUEST DATA PENDING HARIAN (DETAIL TABEL) ===
-  if (dateParam) {
-    const startDate = new Date(dateParam);
-    startDate.setHours(0, 0, 0, 0);
-    
-    const endDate = new Date(dateParam);
-    endDate.setHours(23, 59, 59, 999);
+  if (!dateParam) return NextResponse.json([]);
 
-    const data = await prisma.attendance.findMany({
-      where: {
-        status: "pending",
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
+  const startDate = new Date(dateParam);
+  startDate.setHours(0, 0, 0, 0);
+  
+  const endDate = new Date(dateParam);
+  endDate.setHours(23, 59, 59, 999);
+
+  const data = await prisma.attendance.findMany({
+    where: {
+      // LOGIKA BARU:
+      // Ambil yang statusnya "pending" (data lama)
+      // ATAU yang punya flag "isViolation" (data baru yg sudah diapprove/reject)
+      OR: [
+        { status: "pending" },
+        { isViolation: true }
+      ],
+      
+      // TAPI JANGAN AMBIL YANG SUDAH DIHAPUS SUPERADMIN
+      isPendingDeleted: false, 
+
+      date: {
+        gte: startDate,
+        lte: endDate,
       },
-      include: { 
-        user: {
-          include: {
-            area: true 
-          }
-        } 
-      },
-      orderBy: { checkIn: "asc" }, 
-    });
+    },
+    include: { 
+      user: {
+        include: { area: true }
+      } 
+    },
+    orderBy: { checkIn: "asc" }, 
+  });
 
-    return NextResponse.json(data);
-  }
+  return NextResponse.json(data);
+}
 
-  // === MODE 2: REQUEST REKAP BULANAN (UNTUK TITIK MERAH DI KALENDER) ===
-  if (monthParam && yearParam) {
-    const m = parseInt(monthParam);
-    const y = parseInt(yearParam);
+// === TAMBAHAN ENDPOINT DELETE (KHUSUS SUPERADMIN) ===
+// Kita gabung saja DELETE di file route yang sama untuk kemudahan
+export async function DELETE(req: NextRequest) {
+    try {
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get("id");
 
-    // Filter range 1 bulan penuh
-    const startMonth = new Date(y, m - 1, 1);
-    const endMonth = new Date(y, m, 0, 23, 59, 59);
+        if(!id) return NextResponse.json({error: "ID required"}, {status:400});
 
-    const pendingList = await prisma.attendance.findMany({
-      where: {
-        status: "pending",
-        date: {
-          gte: startMonth,
-          lte: endMonth
+        // Cek Role Admin
+        const cookieStore = await cookies();
+        const userId = cookieStore.get("userId")?.value;
+        const user = await prisma.user.findUnique({where: {id: userId}});
+
+        if (user?.role !== 'superadmin') {
+            return NextResponse.json({message: "Hanya Superadmin"}, {status: 403});
         }
-      },
-      select: { date: true }
-    });
 
-    // Grouping: Hitung jumlah pending per tanggal
-    const summary: Record<string, number> = {};
-    
-    pendingList.forEach(item => {
-      // --- PERBAIKAN DISINI ---
-      // Waktu di DB tersimpan dalam UTC (Contoh: 29 Nov 00:00 WIB = 28 Nov 17:00 UTC)
-      // Kita harus geser +7 jam (WIB) secara manual agar tanggalnya kembali ke 29 Nov
-      const dbDate = new Date(item.date);
-      const wibOffset = 7 * 60 * 60 * 1000; // 7 Jam dalam milidetik
-      const localDate = new Date(dbDate.getTime() + wibOffset);
-      
-      // Ambil string YYYY-MM-DD dari waktu yang sudah digeser
-      const dateKey = localDate.toISOString().split('T')[0];
-      
-      summary[dateKey] = (summary[dateKey] || 0) + 1;
-    });
+        // SOFT DELETE: Hanya set flag hidden, data asli aman
+        await prisma.attendance.update({
+            where: { id },
+            data: { isPendingDeleted: true }
+        });
 
-    return NextResponse.json({ summary });
-  }
-
-  return NextResponse.json({ error: "Parameter tidak lengkap" }, { status: 400 });
+        return NextResponse.json({message: "Success soft delete"});
+    } catch(e) {
+        return NextResponse.json({message: "Error"}, {status:500});
+    }
 }

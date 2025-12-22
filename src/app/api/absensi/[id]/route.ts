@@ -8,13 +8,37 @@ export async function PATCH(
   try {
     const { id } = params;
     const body = await req.json();
-    const { status } = body;
+    const { status, checkIn, checkOut } = body;
 
-    // Validasi input
-    const validStatuses = ["hadir", "sakit", "izin", "cuti", "alpha"];
-    if (!status || !validStatuses.includes(status)) {
+    // Siapkan object penampung data yang akan diupdate
+    const updateData: any = {};
+
+    // --- LOGIKA 1: Update Status (Jika status dikirim) ---
+    if (status) {
+      const validStatuses = ["hadir", "sakit", "izin", "cuti", "alpha"];
+      if (!validStatuses.includes(status)) {
+        return NextResponse.json(
+          { message: "Status tidak valid" },
+          { status: 400 }
+        );
+      }
+      updateData.status = status;
+    }
+
+    // --- LOGIKA 2: Update Waktu (Jika checkIn/checkOut dikirim) ---
+    if (checkIn) {
+      updateData.checkIn = new Date(checkIn);
+    }
+    
+    // checkOut bisa null (untuk reset jam pulang), jadi cek undefined
+    if (checkOut !== undefined) {
+      updateData.checkOut = checkOut ? new Date(checkOut) : null;
+    }
+
+    // Validasi Akhir: Pastikan ada data yang mau diupdate
+    if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
-        { message: "Status tidak valid" },
+        { message: "Tidak ada data yang dikirim untuk diperbarui" },
         { status: 400 }
       );
     }
@@ -22,17 +46,18 @@ export async function PATCH(
     // Update database
     const updated = await prisma.attendance.update({
       where: { id },
-      data: { status },
+      data: updateData,
     });
 
     return NextResponse.json({
-      message: "Status berhasil diperbarui",
+      message: "Data absensi berhasil diperbarui",
       data: updated,
     });
+
   } catch (error) {
-    console.error("Error update status:", error);
+    console.error("Error update absensi:", error);
     return NextResponse.json(
-      { message: "Gagal memperbarui status" },
+      { message: "Gagal memperbarui data" },
       { status: 500 }
     );
   }
