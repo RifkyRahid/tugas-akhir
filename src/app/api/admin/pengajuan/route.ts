@@ -1,40 +1,82 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma"; // Pastikan import prisma pakai kurung kurawal {} jika di lib/prisma export const
-import { Prisma } from "@prisma/client";
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const jenis = searchParams.get("jenis");
-  const status = searchParams.get("status");
+export const dynamic = 'force-dynamic';
 
-  // Gunakan Tipe dari Prisma supaya auto-complete jalan
-  const whereClause: Prisma.LeaveRequestWhereInput = {};
-
-  if (jenis) {
-    // Casting agar Prisma tau ini enum yang valid
-    whereClause.type = jenis as any; 
-  }
-
-  if (status) {
-    whereClause.status = status as any;
-  }
-
+export async function GET(req: Request) {
   try {
-    const pengajuan = await prisma.leaveRequest.findMany({
-      where: whereClause,
-      include: {
-        user: {
-          select: { name: true, role: true },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+    const { searchParams } = new URL(req.url);
+    
+    // --- 1. Ambil Parameter Filter ---
+    const jenis = searchParams.get("jenis") || undefined;
+    const status = searchParams.get("status") || undefined;
+    const year = searchParams.get("year");   // Filter Tahun
+    const month = searchParams.get("month"); // Filter Bulan (0-11)
+    
+    // --- 2. Ambil Parameter Pagination ---
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10"); // Default 10 data per halaman
+    const skip = (page - 1) * limit;
+
+    // --- 3. Bangun Query Where ---
+    const whereClause: any = {};
+
+    if (jenis) whereClause.type = jenis;
+    if (status) whereClause.status = status;
+
+    // Logika Filter Tanggal (Berdasarkan startDate cuti)
+    if (year) {
+      const targetYear = parseInt(year);
+      const startFilter = new Date(targetYear, 0, 1); // 1 Jan
+      const endFilter = new Date(targetYear, 11, 31, 23, 59, 59); // 31 Des
+
+      // Jika Bulan dipilih juga
+      if (month) {
+        const targetMonth = parseInt(month); // 1-12
+        startFilter.setMonth(targetMonth - 1); // JS Month mulai dari 0
+        startFilter.setDate(1);
+        
+        // Akhir bulan (trik ambil tanggal 0 bulan depannya)
+        endFilter.setFullYear(targetYear);
+        endFilter.setMonth(targetMonth);
+        endFilter.setDate(0); 
+      }
+
+      whereClause.startDate = {
+        gte: startFilter,
+        lte: endFilter,
+      };
+    }
+
+    // --- 4. Eksekusi Query dengan Transaksi (Hitung Total & Ambil Data) ---
+    const [totalData, requests] = await prisma.$transaction([
+      prisma.leaveRequest.count({ where: whereClause }),
+      prisma.leaveRequest.findMany({
+        where: whereClause,
+        orderBy: { createdAt: "desc" }, // Data terbaru di atas
+        skip: skip,
+        take: limit,
+        include: {
+          user: {
+            select: { name: true, jabatan: { select: { title: true } } }
+          }
+        }
+      }),
+    ]);
+
+    // --- 5. Return Data & Meta Pagination ---
+    return NextResponse.json({
+      data: requests,
+      meta: {
+        totalData,
+        totalPages: Math.ceil(totalData / limit),
+        currentPage: page,
+        limit,
+      }
     });
 
-    return NextResponse.json(pengajuan);
   } catch (error) {
-    console.error("Gagal mengambil data pengajuan (admin):", error);
-    return NextResponse.json({ error: "Gagal mengambil data" }, { status: 500 });
+    console.error("Error API Admin Pengajuan:", error);
+    return NextResponse.json({ message: "Error server" }, { status: 500 });
   }
 }

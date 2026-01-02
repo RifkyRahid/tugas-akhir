@@ -16,6 +16,10 @@
 # next.js
 /.next/
 /out/
+/buat upload/
+/public/uploads
+/.vscode/
+/.github/
 
 # production
 /build

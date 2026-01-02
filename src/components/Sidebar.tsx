@@ -44,6 +44,8 @@ export default function Sidebar({ role }: SidebarProps) {
       subMenu: [
         { label: "Kelola Karyawan", href: "/admin/karyawan" },
         { label: "Pengajuan Karyawan", href: "/admin/pengajuan" },
+        { label: "Shift Kerja", href: "/admin/shifts" },
+        { label: "Jadwal Kerja", href: "/admin/schedules" },
       ],
     },
     {

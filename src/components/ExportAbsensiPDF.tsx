@@ -9,6 +9,7 @@ export default function ExportAbsensiPDF() {
   const [loading, setLoading] = useState(false);
   const [departments, setDepartments] = useState<any[]>([]);
 
+  // Ambil daftar departemen saat komponen dimuat untuk dropdown filter
   useEffect(() => {
     fetch('/api/master/departemen')
       .then(res => res.json())
@@ -18,10 +19,10 @@ export default function ExportAbsensiPDF() {
       .catch(err => console.error("Gagal load dept", err));
   }, []);
 
+  // Handler saat tombol diklik: Munculkan Modal SweetAlert
   const handleExportClick = async () => {
     const deptOptions = departments.map(d => `<option value="${d.id}">${d.name}</option>`).join("");
     
-    // STYLE KHUSUS MODAL: Font size 14px, Input lebih kecil
     const { value: formValues } = await Swal.fire({
       title: '<span style="font-size: 18px; font-weight:bold;">Export Laporan Absensi</span>',
       html: `
@@ -61,7 +62,7 @@ export default function ExportAbsensiPDF() {
                     margin: 0 !important;
                     width: 100% !important;
                     font-size: 14px !important;
-                    height: 38px !important; /* Tinggi input dikecilkan */
+                    height: 38px !important;
                     padding: 0 10px !important;
                     box-sizing: border-box !important;
                 }
@@ -72,6 +73,7 @@ export default function ExportAbsensiPDF() {
         const typeSelect = document.getElementById('swal-type') as HTMLSelectElement;
         const statusContainer = document.getElementById('status-container') as HTMLDivElement;
         
+        // Tampilkan filter status hanya jika pilih Detail Harian
         typeSelect.addEventListener('change', () => {
             if (typeSelect.value === 'detail') {
                 statusContainer.style.display = 'block';
@@ -83,7 +85,7 @@ export default function ExportAbsensiPDF() {
       focusConfirm: false,
       showCancelButton: true,
       confirmButtonText: "Download PDF",
-      confirmButtonColor: "#dc2626",
+      confirmButtonColor: "#ef4444", // Merah
       preConfirm: () => {
         const startDate = (document.getElementById("swal-start") as HTMLInputElement).value;
         const endDate = (document.getElementById("swal-end") as HTMLInputElement).value;
@@ -107,6 +109,7 @@ export default function ExportAbsensiPDF() {
     }
   };
 
+  // --- LOGIKA GENERATE PDF (SAMA SEPERTI SEBELUMNYA) ---
   const generateRekapPDF = async (startDate: string, endDate: string, deptId: string) => {
     setLoading(true);
     Swal.fire({ title: 'Menghitung Rekap...', didOpen: () => Swal.showLoading() });
@@ -130,22 +133,14 @@ export default function ExportAbsensiPDF() {
 
         autoTable(doc, {
             startY: 35,
-            // UPDATE: Unit Bisnis pindah ke kolom ke-2
             head: [[
-                "No", 
-                "Unit Bisnis", 
-                "Nama Karyawan", 
-                "Jumlah Telat", 
-                "Tidak Pulang", 
-                "Sakit No MC", 
-                "Alpha", 
-                "Total Potongan", 
-                "Total Unpaid"
+                "No", "Unit Bisnis", "Nama Karyawan", "Jml Telat", "Tdk Pulang", 
+                "Sakit No MC", "Alpha", "Potongan", "Unpaid"
             ]],
             body: data.map((row: any, i: number) => [
                 i + 1,
-                row.unit, // Unit dulu
-                row.nama, // Baru Nama
+                row.unit,
+                row.nama,
                 row.jumlahTerlambat,
                 row.jumlahNoCheckout,
                 row.jumlahSakitNoMC,
@@ -153,13 +148,10 @@ export default function ExportAbsensiPDF() {
                 { content: row.totalPotonganAbsensi, styles: { fontStyle: 'bold', fillColor: [255, 237, 213] } },
                 { content: row.totalUnpaidHarian, styles: { fontStyle: 'bold', fillColor: [254, 202, 202] } }
             ]),
-            theme: 'grid',
-            headStyles: { fillColor: [44, 62, 80], halign: 'center' },
+            theme: 'striped',
+            headStyles: { fillColor: [239, 68, 68], halign: 'center' }, // Header Merah
             bodyStyles: { halign: 'center' },
-            columnStyles: {
-                1: { halign: 'left' }, // Unit rata kiri
-                2: { halign: 'left' }  // Nama rata kiri
-            }
+            columnStyles: { 1: { halign: 'left' }, 2: { halign: 'left' } }
         });
 
         doc.save(`Rekap_Payroll_${startDate}.pdf`);
@@ -196,16 +188,10 @@ export default function ExportAbsensiPDF() {
         startY: 35,
         head: [["No", "Unit", "Nama", "Tanggal", "Masuk", "Pulang", "Status", "Ket"]],
         body: data.map((row: any, i: number) => [
-            i + 1,
-            row.unit,
-            row.nama,
-            row.tanggal,
-            row.jamMasuk,
-            row.jamPulang,
-            row.status.toUpperCase(),
-            row.keterangan
+            i + 1, row.unit, row.nama, row.tanggal, row.jamMasuk, row.jamPulang,
+            row.status.toUpperCase(), row.keterangan
         ]),
-        headStyles: { fillColor: [41, 128, 185] },
+        headStyles: { fillColor: [239, 68, 68] }, // Header Merah
         styles: { fontSize: 9 }
       });
 
@@ -219,24 +205,26 @@ export default function ExportAbsensiPDF() {
   };
 
   return (
-    <button
-      onClick={handleExportClick}
-      disabled={loading}
-      style={{
-        backgroundColor: "#dc2626", 
-        color: "white",
-        border: "none",
-        // UPDATE: Padding disamakan dengan generate alpha (8px 16px)
-        padding: "8px 16px",
-        borderRadius: "6px",
-        cursor: loading ? "not-allowed" : "pointer",
-        fontWeight: "bold",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px"
-      }}
-    >
-      📄 {loading ? "Memproses..." : "Export PDF"}
-    </button>
+    <div style={{ marginTop: "27px" }}>
+        <button
+        onClick={handleExportClick}
+        disabled={loading}
+        style={{
+            backgroundColor: loading ? '#94a3b8' : '#ef4444',
+            color: 'white',
+            padding: '10px 20px',
+            borderRadius: '6px', 
+            border: 'none',
+            fontWeight: 'bold', 
+            cursor: loading ? 'not-allowed' : 'pointer',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+        }}
+        >
+        📄 {loading ? "Generating..." : "Export PDF"}
+        </button>
+    </div>
   );
 }
