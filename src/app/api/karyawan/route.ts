@@ -1,10 +1,30 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma'; // Sesuaikan import prisma kamu
+import { prisma } from '@/lib/prisma'; // Sesuaikan path import prisma kamu
 
-export async function GET() {
+// PENTING: Tambahkan ini agar Next.js selalu ambil data terbaru (tidak cache)
+export const dynamic = 'force-dynamic';
+
+// GET: Ambil Data Karyawan (Support Filter Status)
+export async function GET(req: Request) {
   try {
+    // 1. Ambil parameter dari URL (contoh: /api/karyawan?status=active)
+    const { searchParams } = new URL(req.url);
+    const statusParam = searchParams.get("status"); // 'active' | 'inactive' | null
+
+    // 2. Siapkan kondisi filter dasar (Role Karyawan)
+    let whereCondition: any = { role: "karyawan" };
+
+    // 3. Tambahkan filter isActive sesuai parameter
+    if (statusParam === "active") {
+      whereCondition.isActive = true;
+    } else if (statusParam === "inactive") {
+      whereCondition.isActive = false;
+    }
+    // Jika statusParam kosong atau 'all', maka isActive tidak difilter (tampil semua)
+
+    // 4. Query Database
     const users = await prisma.user.findMany({
-      where: { role: "karyawan" },
+      where: whereCondition,
       include: {
         area: true,
         jabatan: {
@@ -14,6 +34,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
+    // 5. Bersihkan password dari hasil return
     const safeUsers = users.map((user) => {
       // @ts-ignore
       const { password, ...rest } = user;
@@ -22,11 +43,12 @@ export async function GET() {
 
     return NextResponse.json(safeUsers);
   } catch (error) {
+    console.error("Error fetching employees:", error);
     return NextResponse.json({ error: "Gagal fetch data" }, { status: 500 });
   }
 }
 
-// POST: Tambah Karyawan Baru (UPDATE FITUR CUTI)
+// POST: Tambah Karyawan Baru (Kode Asli Kamu, Tetap Aman)
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -48,13 +70,14 @@ export async function POST(req: Request) {
         positionId: positionId ? Number(positionId) : null,
         areaId: areaId ? Number(areaId) : null,
         joinDate: new Date(joinDate),
+        isActive: true, // Default user baru pasti aktif
         
-        // --- DATA BARU ---
+        // --- DATA TAMBAHAN (Sesuai kode lama kamu) ---
         birthDate: birthDate ? new Date(birthDate) : null, // Tanggal Lahir
         yearlyLeaveQuota: yearlyLeaveQuota ? Number(yearlyLeaveQuota) : 12, // Default 12
         leaveUsedManual: leaveUsedManual ? Number(leaveUsedManual) : 0,     // Saldo Awal
         
-        position: "-", 
+        position: "-", // Fallback string
       },
     });
 
